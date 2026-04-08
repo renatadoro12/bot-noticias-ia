@@ -79,7 +79,7 @@
   .page-btn.disabled { opacity: 0.2; pointer-events: none; }
   .page-current { font-size: 12px; color: #2a2a2a; letter-spacing: 2px; }
 
-  /* SLOT TABS */
+  /* SEARCH NAV */
   .slot-nav {
     display: flex;
     justify-content: center;
@@ -90,26 +90,11 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    flex-wrap: wrap;
   }
-  .slot-tab {
-    padding: 6px 18px;
-    border-radius: 100px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    border: 1px solid;
-    text-decoration: none;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    background: transparent;
-  }
-  .slot-tab:hover { opacity: 0.75; }
-  .slot-tab.manha  { color: #f59e0b; border-color: #f59e0b40; background: #f59e0b12; }
-  .slot-tab.tarde  { color: #3b82f6; border-color: #3b82f640; background: #3b82f612; }
-  .slot-tab.noite  { color: #8b5cf6; border-color: #8b5cf640; background: #8b5cf612; }
-  .slot-tab.search { color: #555;    border-color: #222;      background: #111; }
+  .slot-tab.search { color: #555; border-color: #222; background: #111;
+    padding: 6px 18px; border-radius: 100px; font-size: 11px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid;
+    cursor: pointer; transition: opacity 0.15s; }
 
   /* SEARCH */
   .search-bar { display: none; padding: 12px 24px; background: #0d0d0d; border-bottom: 1px solid #111; }
@@ -259,13 +244,8 @@
   {% endif %}
 </div>
 
-<!-- ABAS DOS SLOTS -->
+<!-- NAV -->
 <div class="slot-nav">
-  {% for slot_key, slot_info in slot_windows.items() %}
-  {% if grouped[slot_key] %}
-  <a class="slot-tab {{ slot_key }}" href="#{{ slot_key }}">{{ slot_info.label }}</a>
-  {% endif %}
-  {% endfor %}
   <button class="slot-tab search" onclick="toggleSearch()">🔍</button>
 </div>
 
@@ -275,25 +255,8 @@
          placeholder="Buscar notícias..." oninput="filterNews(this.value)">
 </div>
 
-<!-- CONTEÚDO POR SLOT -->
-{% for slot_key, slot_info in slot_windows.items() %}
-{% set articles = grouped[slot_key] %}
-
-<div class="slot-section" id="{{ slot_key }}">
-  <div class="slot-header">
-    {% if slot_key == 'manha' %}
-    <div class="slot-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b80;"></div>
-    <div class="slot-label" style="color:#f59e0b;">{{ slot_info.label }}</div>
-    {% elif slot_key == 'tarde' %}
-    <div class="slot-dot" style="background:#3b82f6;box-shadow:0 0 8px #3b82f680;"></div>
-    <div class="slot-label" style="color:#3b82f6;">{{ slot_info.label }}</div>
-    {% else %}
-    <div class="slot-dot" style="background:#8b5cf6;box-shadow:0 0 8px #8b5cf680;"></div>
-    <div class="slot-label" style="color:#8b5cf6;">{{ slot_info.label }}</div>
-    {% endif %}
-    <span class="slot-count">{{ articles | length }} notícia{% if articles | length != 1 %}s{% endif %}</span>
-  </div>
-
+<!-- CONTEÚDO -->
+<div class="slot-section">
   {% if articles %}
     {% for a in articles %}
     <div class="article" data-searchable="{{ a.title }} {{ a.summary }} {{ a.source }}">
@@ -309,10 +272,9 @@
     </div>
     {% endfor %}
   {% else %}
-    <div class="empty-slot">Ainda sem notícias neste período</div>
+    <div class="empty-slot">Ainda sem notícias hoje</div>
   {% endif %}
 </div>
-{% endfor %}
 
 <div class="search-empty" id="searchEmpty">Nenhuma notícia encontrada</div>
 

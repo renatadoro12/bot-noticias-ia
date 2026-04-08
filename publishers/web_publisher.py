@@ -57,11 +57,12 @@ def generate_and_deploy(
     # Load all articles for today from DB
     rows = database.get_articles_for_date(db_path, run_date)
 
-    grouped: dict[str, list] = {s: [] for s in SLOT_WINDOWS}
-    for row in rows:
-        s = row["slot"]
-        if s in grouped:
-            grouped[s].append(dict(row))
+    # Flat list sorted newest first
+    all_articles = sorted(
+        [dict(row) for row in rows],
+        key=lambda a: a.get("published", ""),
+        reverse=True,
+    )
 
     # Navigation slugs
     from datetime import timedelta
@@ -76,11 +77,9 @@ def generate_and_deploy(
     template = env.get_template("index.html")
     html = template.render(
         **labels,
-        grouped=grouped,
-        slot_windows=SLOT_WINDOWS,
+        articles=all_articles,
         prev_slug=prev_slug if prev_exists else None,
         next_slug=next_slug if next_exists else None,
-        current_slot=slot,
     )
 
     # Write HTML
