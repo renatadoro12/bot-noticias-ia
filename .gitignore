@@ -8,3 +8,5 @@ storage/news.db
 logs/
 *.txt
 !requirements.txt
+node_modules/
+.netlify/
