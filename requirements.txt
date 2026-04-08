@@ -1,0 +1,8 @@
+anthropic==0.49.0
+apscheduler==3.10.4
+feedparser==6.0.11
+jinja2==3.1.4
+python-dotenv==1.0.1
+pyyaml==6.0.2
+requests==2.32.3
+tzdata==2024.2

@@ -7,3 +7,4 @@ venv/
 storage/news.db
 logs/
 *.txt
+!requirements.txt
