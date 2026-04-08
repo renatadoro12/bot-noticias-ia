@@ -1,0 +1,9 @@
+.env
+output/
+__pycache__/
+*.pyc
+.venv/
+venv/
+storage/news.db
+logs/
+*.txt

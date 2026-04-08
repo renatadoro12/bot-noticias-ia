@@ -1,0 +1,115 @@
+feeds:
+  internacional:
+    - https://techcrunch.com/category/artificial-intelligence/feed/
+    - https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+    - https://www.wired.com/feed/tag/artificial-intelligence/rss
+    - https://venturebeat.com/category/ai/feed/
+    - https://www.technologyreview.com/feed/
+    - https://www.zdnet.com/topic/artificial-intelligence/rss.xml
+    - https://arstechnica.com/ai/feed/
+    - https://rss.arxiv.org/rss/cs.AI
+
+  empresas_ia:
+    - https://openai.com/blog/rss.xml
+    - https://www.deepmind.com/blog/rss.xml
+    - https://blogs.microsoft.com/ai/feed/
+    - https://huggingface.co/blog/feed.xml
+
+  negocios:
+    - https://www.businessinsider.com/sai/features/rss
+    - https://fortune.com/feed/fortune-feeds/?id=3230629
+    - https://feeds.bloomberg.com/technology/news.rss
+
+  portugues:
+    - https://olhardigital.com.br/categoria/inteligencia-artificial/feed/
+    - https://www.canaltech.com.br/rss/inteligencia-artificial/
+    - https://tecnoblog.net/tag/inteligencia-artificial/feed/
+    - https://www.techtudo.com.br/inteligencia-artificial/rss2.xml
+    - https://www.startups.com.br/tag/inteligencia-artificial/feed/
+    - https://mittechreview.com.br/feed/
+
+  newsletters:
+    - https://www.therundown.ai/rss
+    - https://aiweekly.co/issues.rss
+    - https://importai.substack.com/feed
+    - https://lastweekinai.substack.com/feed
+    - https://www.superhuman.ai/rss
+    - https://www.marktechpost.com/feed/
+
+keywords:
+  - artificial intelligence
+  - machine learning
+  - deep learning
+  - LLM
+  - GPT
+  - Claude
+  - Gemini
+  - Llama
+  - Mistral
+  - neural network
+  - computer vision
+  - NLP
+  - generative AI
+  - diffusion model
+  - transformer
+  - inteligência artificial
+  - aprendizado de máquina
+  - IA generativa
+  - chatbot
+  - automação inteligente
+  - large language model
+  - foundation model
+  - fine-tuning
+  - AI model
+  - AI tool
+  - OpenAI
+  - Anthropic
+  - Google DeepMind
+  - Stability AI
+  - Midjourney
+  - Minara
+  - Perplexity
+  - Grok
+  - xAI
+  - Manus
+  - Cursor
+  - Copilot
+  - Sora
+  - Runway
+  - ElevenLabs
+  - Cohere
+  - Inflection
+  - Mistral AI
+  - Pika
+  - DeepSeek
+  - Qwen
+  - Gemma
+  - Claude
+  - Gemini Pro
+  - GPT-4
+  - GPT-5
+  - o3
+  - o4
+
+schedule:
+  timezone: America/Sao_Paulo
+  times:
+    - "08:00"
+    - "16:00"
+    - "22:00"
+
+output:
+  summary_lines: 12
+  language: pt-BR
+  max_articles_per_run: 15
+
+database:
+  path: storage/news.db
+  cleanup_days: 30
+
+http:
+  timeout: 15
+  retries: 3
+  min_delay: 0.5
+  max_delay: 2.0
+  user_agent: "Mozilla/5.0 (compatible; NewsBot/1.0)"
