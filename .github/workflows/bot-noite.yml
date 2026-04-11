@@ -1,0 +1,15 @@
+name: Bot IA Noite (22h BRT)
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar função
+        run: |
+          curl -f -X POST \
+            -H "x-trigger-secret: ${{ secrets.TRIGGER_SECRET }}" \
+            --max-time 300 \
+            "https://curious-scone-6f4801.netlify.app/.netlify/functions/bot-noite"

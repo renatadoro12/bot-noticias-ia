@@ -45,13 +45,14 @@ const SLOT_WINDOWS = {
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 
 function nowBR() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  // BRT = UTC-3 (Brasil aboliu horário de verão em 2019)
+  return new Date(Date.now() - 3 * 60 * 60 * 1000);
 }
 
 function dateSlug(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
 
@@ -66,25 +67,34 @@ function escapeHTML(s) {
 // ─── RSS FETCH ─────────────────────────────────────────────────────────────
 
 export async function fetchFeeds() {
-  const parser = new Parser({ timeout: 15000 });
-  const articles = [];
+  const parser = new Parser({ timeout: 10000 });
 
-  for (const url of FEEDS) {
-    try {
-      const feed = await parser.parseURL(url);
-      const source = feed.title || new URL(url).hostname;
-      for (const item of (feed.items || [])) {
-        if (!item.link || !item.title) continue;
-        articles.push({
-          url: item.link.trim(),
-          title: item.title.trim(),
-          source,
-          published: item.pubDate ? new Date(item.pubDate) : new Date(),
-          summary: '',
-        });
-      }
-    } catch (e) {
-      console.warn(`Feed falhou: ${url} — ${e.message}`);
+  const results = await Promise.allSettled(
+    FEEDS.map(url =>
+      parser.parseURL(url).then(feed => ({ url, feed }))
+    )
+  );
+
+  const articles = [];
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.warn(`Feed falhou: ${result.reason?.message || result.reason}`);
+      continue;
+    }
+    const { url, feed } = result.value;
+    const source = feed.title || new URL(url).hostname;
+    for (const item of (feed.items || [])) {
+      if (!item.link || !item.title) continue;
+      if (!item.pubDate) continue;
+      const published = new Date(item.pubDate);
+      if (isNaN(published.getTime())) continue;
+      articles.push({
+        url: item.link.trim(),
+        title: item.title.trim(),
+        source,
+        published,
+        summary: '',
+      });
     }
   }
 
@@ -96,14 +106,19 @@ export async function fetchFeeds() {
 
 export function filterByWindow(articles, slot) {
   const w = SLOT_WINDOWS[slot];
-  const now = nowBR();
+  // Trabalha em UTC real — BRT = UTC-3, então hora BRT + 3 = hora UTC
+  const now = new Date();
 
+  const endH_utc = (w.endH + 3) % 24;
   const end = new Date(now);
-  end.setHours(w.endH, 0, 0, 0);
+  if (w.endH + 3 >= 24) end.setUTCDate(end.getUTCDate() + 1);
+  end.setUTCHours(endH_utc, 0, 0, 0);
 
+  const startH_utc = (w.startH + 3) % 24;
   const start = new Date(now);
-  if (w.prevDay) start.setDate(start.getDate() - 1);
-  start.setHours(w.startH, 0, 0, 0);
+  if (w.prevDay) start.setUTCDate(start.getUTCDate() - 1);
+  if (w.startH + 3 >= 24) start.setUTCDate(start.getUTCDate() + 1);
+  start.setUTCHours(startH_utc, 0, 0, 0);
 
   const filtered = articles.filter(a => a.published >= start && a.published <= end);
   console.log(`Após filtro de data [${slot}]: ${filtered.length}/${articles.length}`);
@@ -163,8 +178,8 @@ const MONTHS_PT = [
 ];
 
 export function generateHTML(articles, today, prevSlug, nextSlug) {
-  const date_pt = `${today.getDate()} de ${MONTHS_PT[today.getMonth()]} de ${today.getFullYear()}`.toUpperCase();
-  const date_compact = `${String(today.getDate()).padStart(2,'0')} ${MONTHS_PT[today.getMonth()].slice(0,3)} ${today.getFullYear()}`;
+  const date_pt = `${today.getUTCDate()} de ${MONTHS_PT[today.getUTCMonth()]} de ${today.getUTCFullYear()}`.toUpperCase();
+  const date_compact = `${String(today.getUTCDate()).padStart(2,'0')} ${MONTHS_PT[today.getUTCMonth()].slice(0,3)} ${today.getUTCFullYear()}`;
 
   const prevBtn = prevSlug
     ? `<a class="page-btn" href="../${prevSlug}/">← Anterior</a>`
@@ -172,11 +187,13 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
   const nextBtn = nextSlug
     ? `<a class="page-btn" href="../${nextSlug}/">Próximo →</a>`
     : `<span class="page-btn disabled">Próximo →</span>`;
+  const hojeBtn = `<a id="btnHoje" class="page-btn" style="display:none;" href="#">Hoje</a>`;
 
   const articlesHTML = articles.length > 0
     ? articles.map(a => {
-        const h = String(a.published.getHours()).padStart(2, '0');
-        const min = String(a.published.getMinutes()).padStart(2, '0');
+        const brtH = a.published ? ((a.published.getUTCHours() - 3 + 24) % 24) : null;
+        const h = brtH !== null ? String(brtH).padStart(2, '0') : '--';
+        const min = a.published ? String(a.published.getUTCMinutes()).padStart(2, '0') : '--';
         return `
     <div class="article" data-searchable="${escapeHTML(a.title)} ${escapeHTML(a.summary)} ${escapeHTML(a.source)}">
       <div class="article-meta">
@@ -248,6 +265,7 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
   ${prevBtn}
   <span class="page-current">${date_compact}</span>
   ${nextBtn}
+  ${hojeBtn}
 </div>
 <div class="slot-nav">
   <button class="slot-tab search" onclick="toggleSearch()">🔍</button>
@@ -265,6 +283,23 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
   <button class="fab" onclick="window.scrollBy({top: window.innerHeight * 0.85, behavior:'smooth'})" title="↓">↓</button>
 </div>
 <script>
+  // Botão "Hoje" — aparece apenas quando não estamos na página de hoje
+  (function() {
+    function todayBRT() {
+      const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      return d.getUTCFullYear() + '-' +
+        String(d.getUTCMonth() + 1).padStart(2,'0') + '-' +
+        String(d.getUTCDate()).padStart(2,'0');
+    }
+    const today = todayBRT();
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const current = parts[parts.length - 1] || '';
+    const btn = document.getElementById('btnHoje');
+    if (btn && current !== today) {
+      btn.href = '/' + today + '/';
+      btn.style.display = 'inline-flex';
+    }
+  })();
   function toggleSearch() {
     const bar = document.getElementById('searchBar');
     const btn = document.getElementById('fabSearch');
@@ -399,8 +434,8 @@ export async function runBot(slot) {
   const articles = unique.length > 0 ? await summarize(unique, apiKey) : [];
 
   // Determina navegação (prev/next) baseado nos arquivos existentes no Netlify
-  const prevDate = new Date(today); prevDate.setDate(prevDate.getDate() - 1);
-  const nextDate = new Date(today); nextDate.setDate(nextDate.getDate() + 1);
+  const prevDate = new Date(today); prevDate.setUTCDate(prevDate.getUTCDate() - 1);
+  const nextDate = new Date(today); nextDate.setUTCDate(nextDate.getUTCDate() + 1);
   const prevSlug = dateSlug(prevDate);
   const nextSlug = dateSlug(nextDate);
 

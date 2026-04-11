@@ -1,9 +1,12 @@
 import { runBot } from './bot-core.mjs';
 
-// 16:00 BRT = 19:00 UTC
-export const config = { schedule: '0 19 * * *' };
-
-export default async function () {
+// Disparado pelo GitHub Actions às 16:00 BRT
+export default async function (req) {
+  const secret = process.env.TRIGGER_SECRET;
+  if (secret) {
+    const auth = (req?.headers?.get?.('x-trigger-secret')) || '';
+    if (auth !== secret) return new Response('Unauthorized', { status: 401 });
+  }
   await runBot('tarde');
   return new Response('OK');
 }
