@@ -6,10 +6,29 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Disparar função
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Gerar notícias
+        run: node runner.mjs tarde
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Salvar HTML no repositório
         run: |
-          curl -f -X POST \
-            -H "x-trigger-secret: ${{ secrets.TRIGGER_SECRET }}" \
-            --max-time 300 \
-            "https://curious-scone-6f4801.netlify.app/.netlify/functions/bot-tarde"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/
+          git diff --staged --quiet || git commit -m "bot: noticias-ia $(date -u '+%Y-%m-%d') tarde"
+          git push
+      - name: Deploy no Netlify
+        run: npx netlify-cli@latest deploy --prod --dir=public
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
