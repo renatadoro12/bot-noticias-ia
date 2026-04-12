@@ -41,8 +41,8 @@ const prevDate = new Date(today); prevDate.setUTCDate(prevDate.getUTCDate() - 1)
 const nextDate = new Date(today); nextDate.setUTCDate(nextDate.getUTCDate() + 1);
 const prevSlug = dateSlug(prevDate);
 const nextSlug = dateSlug(nextDate);
-const hasPrev = existsSync(`public/${prevSlug}/index.html`);
-const hasNext = existsSync(`public/${nextSlug}/index.html`);
+const hasPrev = existsSync(`docs/${prevSlug}/index.html`);
+const hasNext = existsSync(`docs/${nextSlug}/index.html`);
 
 const html = generateHTML(
   articles, today,
@@ -50,12 +50,12 @@ const html = generateHTML(
   hasNext ? nextSlug : null
 );
 
-mkdirSync(`public/${slug}`, { recursive: true });
-writeFileSync(`public/${slug}/index.html`, html, 'utf-8');
+mkdirSync(`docs/${slug}`, { recursive: true });
+writeFileSync(`docs/${slug}/index.html`, html, 'utf-8');
 writeFileSync(
-  'public/index.html',
+  'docs/index.html',
   `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/${slug}/"><title>Notícias IA</title></head><body><script>window.location.replace("/${slug}/")<\/script></body></html>`,
   'utf-8'
 );
 
-console.log(`\n✅ ${articles.length} notícias geradas → public/${slug}/index.html\n`);
+console.log(`\n✅ ${articles.length} notícias geradas → docs/${slug}/index.html\n`);
