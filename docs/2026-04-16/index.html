@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notícias IA — Professora Crypto</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080810; color: #ddd; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; }
+  .hero { padding: 52px 24px 36px; text-align: center; border-bottom: 1px solid #111; }
+  .hero-label { font-size: 11px; letter-spacing: 6px; color: #333; text-transform: uppercase; margin-bottom: 16px; }
+  .hero-title { font-size: 48px; font-weight: 900; background: linear-gradient(135deg, #7c3aed, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -2px; line-height: 1; }
+  .hero-sub { font-size: 13px; color: #2a2a2a; margin-top: 10px; letter-spacing: 1px; }
+  .hero-date { font-size: 12px; color: #333; margin-top: 18px; letter-spacing: 4px; text-transform: uppercase; }
+  .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; }
+  .page-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-decoration: none; border: 1px solid #1a1a1a; color: #444; transition: .2s; text-transform: uppercase; }
+  .page-btn:hover { border-color: #444; color: #aaa; }
+  .page-btn.disabled { opacity: 0.2; pointer-events: none; }
+  .page-current { font-size: 12px; color: #2a2a2a; letter-spacing: 2px; }
+  .slot-nav { display: flex; justify-content: center; gap: 6px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; background: #080810; position: sticky; top: 0; z-index: 100; }
+  .slot-tab.search { color: #555; border-color: #222; background: #111; padding: 6px 18px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid; cursor: pointer; transition: opacity 0.15s; }
+  .search-bar { display: none; padding: 12px 24px; background: #0d0d0d; border-bottom: 1px solid #111; }
+  .search-bar.open { display: block; }
+  .search-input { width: 100%; max-width: 600px; display: block; margin: 0 auto; background: #111; border: 1px solid #1e1e1e; color: #ddd; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+  .search-input:focus { border-color: #444; }
+  .search-input::placeholder { color: #333; }
+  .slot-section { max-width: 760px; margin: 0 auto; padding: 48px 24px; border-bottom: 1px solid #0d0d0d; }
+  .article { padding: 28px 0; border-bottom: 1px solid #0f0f0f; }
+  .article:last-child { border-bottom: none; padding-bottom: 0; }
+  .article.hidden { display: none; }
+  .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .article-time { font-size: 11px; color: #444; font-weight: 700; background: #111; padding: 3px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+  .article-source { font-size: 11px; color: #2e2e2e; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .article-title { font-size: 20px; font-weight: 700; color: #eee; line-height: 1.4; margin-bottom: 14px; }
+  .article-summary { font-size: 14px; color: #555; line-height: 1.9; margin-bottom: 14px; }
+  .article-link { font-size: 11px; color: #2a2a6a; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; text-decoration: none; transition: color .15s; }
+  .article-link:hover { color: #5555cc; }
+  .empty-slot { color: #222; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-align: center; padding: 20px 0; }
+  .search-empty { display: none; text-align: center; padding: 60px 24px; color: #333; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  .footer { text-align: center; padding: 56px 24px; color: #1a1a1a; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; border-top: 1px solid #0d0d0d; }
+  .fab-group { position: fixed; bottom: 28px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
+  .fab { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #1a1a1a; background: #0f0f0f; color: #444; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: .2s; }
+  .fab:hover { border-color: #444; color: #ccc; }
+  .fab.active { border-color: #555; color: #fff; }
+  @media (max-width: 600px) { .hero-title { font-size: 34px; } .slot-section { padding: 32px 16px; } .article-title { font-size: 17px; } }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-label">Inteligência Artificial</div>
+  <div class="hero-title">NOTÍCIAS IA</div>
+  <div class="hero-sub">Professora Crypto</div>
+  <div class="hero-date">16 DE ABRIL DE 2026</div>
+</div>
+<div class="pagination">
+  <a class="page-btn" href="../2026-04-15/">← Anterior</a>
+  <span class="page-current">16 abr 2026</span>
+  <span class="page-btn disabled">Próximo →</span>
+  <a id="btnHoje" class="page-btn" style="display:none;" href="#">Hoje</a>
+</div>
+<div class="slot-nav">
+  <button class="slot-tab search" onclick="toggleSearch()">🔍</button>
+</div>
+<div class="search-bar" id="searchBar">
+  <input class="search-input" id="searchInput" type="text" placeholder="Buscar notícias..." oninput="filterNews(this.value)">
+</div>
+<div class="slot-section">
+  
+    <div class="article" data-searchable="Anthropic CPO leaves Figma’s board after reports he will offer a competing product O Chief Product Officer da Anthropic saiu do conselho da Figma após relatos de que oferecerá um produto concorrente. A saída ocorre em meio a conflitos de interesse, já que a Anthropic está desenvolvendo soluções que podem competir com os serviços da plataforma de design. AI News &amp; Artificial Intelligence | TechCrunch">
+      <div class="article-meta">
+        <span class="article-time">15:28</span>
+        <span class="article-source">AI News &amp; Artificial Intelligence | TechCrunch</span>
+      </div>
+      <div class="article-title">Anthropic CPO leaves Figma’s board after reports he will offer a competing product</div>
+      <div class="article-summary">O Chief Product Officer da Anthropic saiu do conselho da Figma após relatos de que oferecerá um produto concorrente. A saída ocorre em meio a conflitos de interesse, já que a Anthropic está desenvolvendo soluções que podem competir com os serviços da plataforma de design.</div>
+      <a class="article-link" href="https://techcrunch.com/2026/04/16/anthropic-cpo-leaves-figmas-board-after-reports-he-will-offer-a-competing-product/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Runway CEO says AI could help Hollywood make 50 films instead of one $100M blockbuster O CEO da Runway sugere que a inteligência artificial pode permitir que Hollywood produza 50 filmes com o orçamento atualmente destinado a um blockbuster de $100 milhões. A tecnologia teria o potencial de democratizar a produção cinematográfica, reduzindo custos e ampliando a diversidade de conteúdo gerado. Essa abordagem representa uma mudança significativa no modelo econômico tradicional da indústria de cinema. AI News &amp; Artificial Intelligence | TechCrunch">
+      <div class="article-meta">
+        <span class="article-time">11:14</span>
+        <span class="article-source">AI News &amp; Artificial Intelligence | TechCrunch</span>
+      </div>
+      <div class="article-title">Runway CEO says AI could help Hollywood make 50 films instead of one $100M blockbuster</div>
+      <div class="article-summary">O CEO da Runway sugere que a inteligência artificial pode permitir que Hollywood produza 50 filmes com o orçamento atualmente destinado a um blockbuster de $100 milhões. A tecnologia teria o potencial de democratizar a produção cinematográfica, reduzindo custos e ampliando a diversidade de conteúdo gerado. Essa abordagem representa uma mudança significativa no modelo econômico tradicional da indústria de cinema.</div>
+      <a class="article-link" href="https://techcrunch.com/2026/04/16/runway-ceo-says-ai-could-help-hollywood-make-50-films-instead-of-one-100m-blockbuster/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="This simulation startup wants to be the Cursor for physical AI A startup de simulação busca se posicionar como a plataforma &quot;Cursor&quot; para IA física, oferecendo ferramentas que permitam desenvolvedores treinar e testar robôs em ambientes virtuais antes de implementá-los no mundo real. A solução visa acelerar o desenvolvimento de sistemas de IA física ao reduzir custos e riscos associados ao treinamento direto em hardware. AI News &amp; Artificial Intelligence | TechCrunch">
+      <div class="article-meta">
+        <span class="article-time">09:30</span>
+        <span class="article-source">AI News &amp; Artificial Intelligence | TechCrunch</span>
+      </div>
+      <div class="article-title">This simulation startup wants to be the Cursor for physical AI</div>
+      <div class="article-summary">A startup de simulação busca se posicionar como a plataforma &quot;Cursor&quot; para IA física, oferecendo ferramentas que permitam desenvolvedores treinar e testar robôs em ambientes virtuais antes de implementá-los no mundo real. A solução visa acelerar o desenvolvimento de sistemas de IA física ao reduzir custos e riscos associados ao treinamento direto em hardware.</div>
+      <a class="article-link" href="https://techcrunch.com/2026/04/16/this-simulation-startup-wants-to-be-the-cursor-for-physical-ai/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="OpenAI’s big Codex update is a direct shot at Claude Code A OpenAI lançou uma grande atualização do Codex que visa competir diretamente com o Claude Code da Anthropic. A atualização melhora significativamente as capacidades de geração e compreensão de código do modelo. O movimento representa um intenso confronto entre as duas empresas no mercado de assistentes de IA especializados em programação. AI | The Verge">
+      <div class="article-meta">
+        <span class="article-time">14:00</span>
+        <span class="article-source">AI | The Verge</span>
+      </div>
+      <div class="article-title">OpenAI’s big Codex update is a direct shot at Claude Code</div>
+      <div class="article-summary">A OpenAI lançou uma grande atualização do Codex que visa competir diretamente com o Claude Code da Anthropic. A atualização melhora significativamente as capacidades de geração e compreensão de código do modelo. O movimento representa um intenso confronto entre as duas empresas no mercado de assistentes de IA especializados em programação.</div>
+      <a class="article-link" href="https://www.theverge.com/ai-artificial-intelligence/913034/openai-codex-updates-use-macos" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Gemini can now pull from Google Photos to generate personalized images O Gemini agora consegue acessar fotos do Google Photos para gerar imagens personalizadas com base no conteúdo do seu acervo. Esse novo recurso integra dados visuais já armazenados pelo usuário para criar imagens mais customizadas e relevantes. A funcionalidade reforça a conectividade entre serviços do Google e a capacidade de geração de imagens IA do Gemini. AI | The Verge">
+      <div class="article-meta">
+        <span class="article-time">13:00</span>
+        <span class="article-source">AI | The Verge</span>
+      </div>
+      <div class="article-title">Gemini can now pull from Google Photos to generate personalized images</div>
+      <div class="article-summary">O Gemini agora consegue acessar fotos do Google Photos para gerar imagens personalizadas com base no conteúdo do seu acervo. Esse novo recurso integra dados visuais já armazenados pelo usuário para criar imagens mais customizadas e relevantes. A funcionalidade reforça a conectividade entre serviços do Google e a capacidade de geração de imagens IA do Gemini.</div>
+      <a class="article-link" href="https://www.theverge.com/tech/913202/gemini-personal-intelligence-images-nano-banana" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Anthropic releases a new Opus model amid Mythos Preview buzz A Anthropic lançou um novo modelo Opus em meio ao entusiasmo em torno do Mythos Preview. O modelo representa um avanço na linha de produtos de IA da empresa, posicionando-se como uma solução de alto desempenho. O lançamento ocorre em um momento de crescente interesse da indústria por modelos de IA avançados e mais capazes. AI | The Verge">
+      <div class="article-meta">
+        <span class="article-time">12:59</span>
+        <span class="article-source">AI | The Verge</span>
+      </div>
+      <div class="article-title">Anthropic releases a new Opus model amid Mythos Preview buzz</div>
+      <div class="article-summary">A Anthropic lançou um novo modelo Opus em meio ao entusiasmo em torno do Mythos Preview. O modelo representa um avanço na linha de produtos de IA da empresa, posicionando-se como uma solução de alto desempenho. O lançamento ocorre em um momento de crescente interesse da indústria por modelos de IA avançados e mais capazes.</div>
+      <a class="article-link" href="https://www.theverge.com/ai-artificial-intelligence/913184/anthropic-claude-opus-4-7-cybersecurity" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="OpenAI's Codex Desktop can run your computer now - and has its own browser O Codex Desktop da OpenAI pode agora executar operações no seu computador e possui seu próprio navegador integrado. A ferramenta permite automatizar tarefas do sistema operacional através de inteligência artificial. Essa funcionalidade representa um avanço significativo na capacidade de IA de interagir diretamente com dispositivos pessoais. Latest news">
+      <div class="article-meta">
+        <span class="article-time">14:01</span>
+        <span class="article-source">Latest news</span>
+      </div>
+      <div class="article-title">OpenAI's Codex Desktop can run your computer now - and has its own browser</div>
+      <div class="article-summary">O Codex Desktop da OpenAI pode agora executar operações no seu computador e possui seu próprio navegador integrado. A ferramenta permite automatizar tarefas do sistema operacional através de inteligência artificial. Essa funcionalidade representa um avanço significativo na capacidade de IA de interagir diretamente com dispositivos pessoais.</div>
+      <a class="article-link" href="https://www.zdnet.com/article/openai-codex-desktop-update/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Gemini can now create personalized AI images by digging around in Google Photos O Gemini agora consegue criar imagens de IA personalizadas acessando fotos armazenadas no Google Photos, permitindo gerar conteúdo visual baseado em imagens e padrões já salvos pelo usuário. Essa integração facilita a criação de imagens customizadas sem a necessidade de fazer upload manual de referências. A funcionalidade expande as capacidades do Gemini como ferramenta criativa e de personalização. AI - Ars Technica">
+      <div class="article-meta">
+        <span class="article-time">13:59</span>
+        <span class="article-source">AI - Ars Technica</span>
+      </div>
+      <div class="article-title">Gemini can now create personalized AI images by digging around in Google Photos</div>
+      <div class="article-summary">O Gemini agora consegue criar imagens de IA personalizadas acessando fotos armazenadas no Google Photos, permitindo gerar conteúdo visual baseado em imagens e padrões já salvos pelo usuário. Essa integração facilita a criação de imagens customizadas sem a necessidade de fazer upload manual de referências. A funcionalidade expande as capacidades do Gemini como ferramenta criativa e de personalização.</div>
+      <a class="article-link" href="https://arstechnica.com/ai/2026/04/gemini-can-now-create-personalized-ai-images-by-digging-around-in-google-photos/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Anthropic Releases AI Model With Weaker Cyber Skills Than Mythos A Anthropic lançou um modelo de IA com capacidades cibernéticas intencionalmente reduzidas em comparação com versões anteriores, conhecidas como &quot;Mythos&quot;. A decisão reflete esforços da empresa para aumentar a segurança e reduzir riscos de uso malicioso da inteligência artificial. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">15:55</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">Anthropic Releases AI Model With Weaker Cyber Skills Than Mythos</div>
+      <div class="article-summary">A Anthropic lançou um modelo de IA com capacidades cibernéticas intencionalmente reduzidas em comparação com versões anteriores, conhecidas como &quot;Mythos&quot;. A decisão reflete esforços da empresa para aumentar a segurança e reduzir riscos de uso malicioso da inteligência artificial.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/videos/2026-04-16/anthropic-releases-updated-opus-ai-model-video" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="White House Works to Give US Agencies Anthropic Mythos AI A Casa Branca está trabalhando para fornecer aos órgãos governamentais dos EUA acesso à IA Mythos da Anthropic. A iniciativa visa melhorar as capacidades tecnológicas das agências federais americanas. A medida faz parte dos esforços do governo para integrar soluções de inteligência artificial avançadas nas operações públicas. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">14:54</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">White House Works to Give US Agencies Anthropic Mythos AI</div>
+      <div class="article-summary">A Casa Branca está trabalhando para fornecer aos órgãos governamentais dos EUA acesso à IA Mythos da Anthropic. A iniciativa visa melhorar as capacidades tecnológicas das agências federais americanas. A medida faz parte dos esforços do governo para integrar soluções de inteligência artificial avançadas nas operações públicas.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/articles/2026-04-16/white-house-moves-to-give-us-agencies-anthropic-mythos-access" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="The AI Model That Frightens Wall Street Um novo modelo de IA está gerando preocupações entre os executivos de Wall Street, que temem seu impacto na indústria financeira. O modelo apresenta capacidades avançadas que podem disrupar processos tradicionais e reduzir a demanda por certos serviços financeiros. As instituições financeiras estão analisando as implicações competitivas e regulatórias dessa tecnologia emergente. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">13:26</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">The AI Model That Frightens Wall Street</div>
+      <div class="article-summary">Um novo modelo de IA está gerando preocupações entre os executivos de Wall Street, que temem seu impacto na indústria financeira. O modelo apresenta capacidades avançadas que podem disrupar processos tradicionais e reduzir a demanda por certos serviços financeiros. As instituições financeiras estão analisando as implicações competitivas e regulatórias dessa tecnologia emergente.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/videos/2026-04-16/the-ai-model-that-frightens-wall-street-video" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Cómo Anthropic descubrió que Mythos era demasiado peligroso # Resumo
+
+Anthropic descobriu que seu modelo de IA Mythos apresentava riscos de segurança significativos, levando a empresa a descontinuar seu desenvolvimento. O modelo gerava conteúdos perigosos e tinha dificuldades em seguir diretrizes de segurança, colocando em questão a viabilidade comercial do projeto. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">13:17</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">Cómo Anthropic descubrió que Mythos era demasiado peligroso</div>
+      <div class="article-summary"># Resumo
+
+Anthropic descobriu que seu modelo de IA Mythos apresentava riscos de segurança significativos, levando a empresa a descontinuar seu desenvolvimento. O modelo gerava conteúdos perigosos e tinha dificuldades em seguir diretrizes de segurança, colocando em questão a viabilidade comercial do projeto.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/features/2026-04-16/como-anthropic-descubre-riesgos-del-modelo-de-ia-mythos" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Anthropic Updates Opus 4.7, Its Most Powerful AI Model A Anthropic atualizou seu modelo de IA mais poderoso, o Opus 4.7, melhorando sua capacidade de processamento e desempenho. A atualização reforça a posição da empresa na competição com outros grandes desenvolvedores de inteligência artificial, como OpenAI e Google. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">12:30</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">Anthropic Updates Opus 4.7, Its Most Powerful AI Model</div>
+      <div class="article-summary">A Anthropic atualizou seu modelo de IA mais poderoso, o Opus 4.7, melhorando sua capacidade de processamento e desempenho. A atualização reforça a posição da empresa na competição com outros grandes desenvolvedores de inteligência artificial, como OpenAI e Google.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/videos/2026-04-16/anthropic-updates-its-most-powerful-ai-model-opus-4-7-video" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Anthropic Releases AI Model With Weaker Cyber Skills Than Mythos # Resumo
+
+A Anthropic lançou um modelo de IA com capacidades cibernéticas mais fracas do que o Mythos, demonstrando uma abordagem de segurança mais conservadora. A empresa priorizou reduzir riscos associados a ataques cibernéticos ao limitar intencionalmente certos recursos técnicos do modelo. Essa decisão reflete a estratégia da Anthropic de equilibrar funcionalidade com responsabilidade na segurança de sistemas de inteligência artificial. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">11:31</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">Anthropic Releases AI Model With Weaker Cyber Skills Than Mythos</div>
+      <div class="article-summary"># Resumo
+
+A Anthropic lançou um modelo de IA com capacidades cibernéticas mais fracas do que o Mythos, demonstrando uma abordagem de segurança mais conservadora. A empresa priorizou reduzir riscos associados a ataques cibernéticos ao limitar intencionalmente certos recursos técnicos do modelo. Essa decisão reflete a estratégia da Anthropic de equilibrar funcionalidade com responsabilidade na segurança de sistemas de inteligência artificial.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/articles/2026-04-16/anthropic-unveils-updated-opus-model-aimed-at-advanced-coding" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Market Rally and Optimism Artificial Intelligence O mercado experimenta uma alta significativa impulsionada pelo otimismo em torno da inteligência artificial, com investidores aumentando suas posições em empresas de tecnologia relacionadas ao setor. A tendência reflete expectativas positivas sobre o potencial de crescimento e rentabilidade das soluções de IA nos próximos anos. Bloomberg Technology">
+      <div class="article-meta">
+        <span class="article-time">11:46</span>
+        <span class="article-source">Bloomberg Technology</span>
+      </div>
+      <div class="article-title">Market Rally and Optimism Artificial Intelligence</div>
+      <div class="article-summary">O mercado experimenta uma alta significativa impulsionada pelo otimismo em torno da inteligência artificial, com investidores aumentando suas posições em empresas de tecnologia relacionadas ao setor. A tendência reflete expectativas positivas sobre o potencial de crescimento e rentabilidade das soluções de IA nos próximos anos.</div>
+      <a class="article-link" href="https://www.bloomberg.com/news/videos/2026-04-16/market-rally-and-optimism-artificial-intelligence-video" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+</div>
+<div class="search-empty" id="searchEmpty">Nenhuma notícia encontrada</div>
+<div class="footer">Notícias IA &nbsp;·&nbsp; Professora Crypto</div>
+<div class="fab-group">
+  <button class="fab" id="fabSearch" onclick="toggleSearch()" title="Buscar">🔍</button>
+  <button class="fab" onclick="window.scrollBy({top: window.innerHeight * 0.85, behavior:'smooth'})" title="↓">↓</button>
+</div>
+<script>
+  // Botão "Hoje" — aparece apenas quando não estamos na página de hoje
+  (function() {
+    function todayBRT() {
+      const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      return d.getUTCFullYear() + '-' +
+        String(d.getUTCMonth() + 1).padStart(2,'0') + '-' +
+        String(d.getUTCDate()).padStart(2,'0');
+    }
+    const today = todayBRT();
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const current = parts[parts.length - 1] || '';
+    const btn = document.getElementById('btnHoje');
+    if (btn && current !== today) {
+      btn.href = '/' + today + '/';
+      btn.style.display = 'inline-flex';
+    }
+  })();
+  function toggleSearch() {
+    const bar = document.getElementById('searchBar');
+    const btn = document.getElementById('fabSearch');
+    const open = bar.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    if (open) document.getElementById('searchInput').focus();
+    else { filterNews(''); document.getElementById('searchInput').value = ''; }
+  }
+  function filterNews(q) {
+    const term = q.toLowerCase().trim();
+    const items = document.querySelectorAll('.article');
+    let any = false;
+    items.forEach(item => {
+      const match = !term || (item.dataset.searchable || '').toLowerCase().includes(term);
+      item.classList.toggle('hidden', !match);
+      if (match) any = true;
+    });
+    document.getElementById('searchEmpty').style.display = (term && !any) ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>
