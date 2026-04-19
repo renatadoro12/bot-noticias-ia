@@ -28,7 +28,8 @@ def _date_labels(today: datetime) -> dict:
 
 
 def generate_and_deploy(
-    new_articles: list[dict],
+    new_ia_articles: list[dict],
+    new_tech_articles: list[dict],
     slot: str,
     db_path: str,
     output_base: str,
@@ -40,9 +41,8 @@ def generate_and_deploy(
     labels = _date_labels(today)
 
     # Save new articles to DB
-    for a in new_articles:
+    for a in new_ia_articles:
         pub = a.get("published_time", "--:--")
-        # Reconstruct full ISO published string for storage
         database.insert_article(
             db_path=db_path,
             url=a["url"],
@@ -52,17 +52,32 @@ def generate_and_deploy(
             slot=slot,
             run_date=run_date,
             summary=a.get("summary", ""),
+            category="ia",
+        )
+    for a in new_tech_articles:
+        pub = a.get("published_time", "--:--")
+        database.insert_article(
+            db_path=db_path,
+            url=a["url"],
+            title=a["title"],
+            source=a["source"],
+            published=f"{run_date}T{pub}:00",
+            slot=slot,
+            run_date=run_date,
+            summary=a.get("summary", ""),
+            category="tech",
         )
 
     # Load all articles for today from DB
     rows = database.get_articles_for_date(db_path, run_date)
-
-    # Flat list sorted newest first
-    all_articles = sorted(
+    all_rows = sorted(
         [dict(row) for row in rows],
         key=lambda a: a.get("published", ""),
         reverse=True,
     )
+
+    ia_articles = [a for a in all_rows if a.get("category", "ia") == "ia"]
+    tech_articles = [a for a in all_rows if a.get("category") == "tech"]
 
     # Navigation slugs
     from datetime import timedelta
@@ -77,7 +92,8 @@ def generate_and_deploy(
     template = env.get_template("index.html")
     html = template.render(
         **labels,
-        articles=all_articles,
+        ia_articles=ia_articles,
+        tech_articles=tech_articles,
         prev_slug=prev_slug if prev_exists else None,
         next_slug=next_slug if next_exists else None,
     )

@@ -79,10 +79,11 @@
   .page-btn.disabled { opacity: 0.2; pointer-events: none; }
   .page-current { font-size: 12px; color: #2a2a2a; letter-spacing: 2px; }
 
-  /* SEARCH NAV */
-  .slot-nav {
+  /* TABS NAV */
+  .tabs-nav {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 6px;
     padding: 14px 24px;
     border-bottom: 1px solid #0f0f0f;
@@ -91,10 +92,45 @@
     top: 0;
     z-index: 100;
   }
-  .slot-tab.search { color: #555; border-color: #222; background: #111;
-    padding: 6px 18px; border-radius: 100px; font-size: 11px; font-weight: 700;
-    letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid;
-    cursor: pointer; transition: opacity 0.15s; }
+  .tab-btn {
+    padding: 6px 20px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1px solid #1a1a1a;
+    background: transparent;
+    color: #444;
+    cursor: pointer;
+    transition: .15s;
+  }
+  .tab-btn:hover { border-color: #444; color: #aaa; }
+  .tab-btn.active-ia {
+    background: #1a0a3a;
+    border-color: #5b21b6;
+    color: #a78bfa;
+  }
+  .tab-btn.active-tech {
+    background: #0a1f3a;
+    border-color: #1d4ed8;
+    color: #60a5fa;
+  }
+  .tab-search {
+    margin-left: auto;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1px solid #1a1a1a;
+    background: transparent;
+    color: #444;
+    cursor: pointer;
+    transition: .15s;
+  }
+  .tab-search:hover { border-color: #444; color: #aaa; }
 
   /* SEARCH */
   .search-bar { display: none; padding: 12px 24px; background: #0d0d0d; border-bottom: 1px solid #111; }
@@ -107,6 +143,10 @@
   }
   .search-input:focus { border-color: #444; }
   .search-input::placeholder { color: #333; }
+
+  /* TAB PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
   /* SLOT SECTIONS */
   .slot-section {
@@ -127,12 +167,16 @@
     width: 10px; height: 10px;
     border-radius: 50%; flex-shrink: 0;
   }
+  .slot-dot.ia { background: #7c3aed; }
+  .slot-dot.tech { background: #2563eb; }
   .slot-label {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 3px;
     text-transform: uppercase;
   }
+  .slot-label.ia { color: #a78bfa; }
+  .slot-label.tech { color: #60a5fa; }
   .slot-count {
     font-size: 11px;
     color: #222;
@@ -215,14 +259,16 @@
     .hero-title { font-size: 34px; }
     .slot-section { padding: 32px 16px; }
     .article-title { font-size: 17px; }
+    .tabs-nav { gap: 4px; padding: 12px 16px; }
+    .tab-btn { padding: 6px 14px; font-size: 10px; }
   }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="hero-label">Inteligência Artificial</div>
-  <div class="hero-title">NOTÍCIAS IA</div>
+  <div class="hero-label">Inteligência Artificial &amp; Tecnologia</div>
+  <div class="hero-title">NOTÍCIAS</div>
   <div class="hero-sub">Professora Crypto</div>
   <div class="hero-date">{{ date_pt }}</div>
 </div>
@@ -244,9 +290,11 @@
   {% endif %}
 </div>
 
-<!-- NAV -->
-<div class="slot-nav">
-  <button class="slot-tab search" onclick="toggleSearch()">🔍</button>
+<!-- TABS -->
+<div class="tabs-nav">
+  <button class="tab-btn active-ia" id="tab-ia" onclick="switchTab('ia')">🤖 Inteligência Artificial</button>
+  <button class="tab-btn" id="tab-tech" onclick="switchTab('tech')">💡 Tecnologia</button>
+  <button class="tab-search" id="fabSearch" onclick="toggleSearch()">🔍</button>
 </div>
 
 <!-- BUSCA -->
@@ -255,61 +303,106 @@
          placeholder="Buscar notícias..." oninput="filterNews(this.value)">
 </div>
 
-<!-- CONTEÚDO -->
-<div class="slot-section">
-  {% if articles %}
-    {% for a in articles %}
-    <div class="article" data-searchable="{{ a.title }} {{ a.summary }} {{ a.source }}">
-      <div class="article-meta">
-        <span class="article-time">{{ a.published.split('T')[1][:5] if 'T' in a.published else '--:--' }}</span>
-        <span class="article-source">{{ a.source }}</span>
-      </div>
-      <div class="article-title">{{ a.title }}</div>
-      <div class="article-summary">{{ a.summary }}</div>
-      <a class="article-link" href="{{ a.url }}" target="_blank" rel="noopener">
-        Ler matéria original →
-      </a>
+<!-- ABA IA -->
+<div class="tab-panel active" id="panel-ia">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot ia"></span>
+      <span class="slot-label ia">Inteligência Artificial</span>
+      <span class="slot-count">{{ ia_articles|length }} notícias</span>
     </div>
-    {% endfor %}
-  {% else %}
-    <div class="empty-slot">Ainda sem notícias hoje</div>
-  {% endif %}
+    {% if ia_articles %}
+      {% for a in ia_articles %}
+      <div class="article" data-searchable="{{ a.title }} {{ a.summary }} {{ a.source }}">
+        <div class="article-meta">
+          <span class="article-time">{{ a.published.split('T')[1][:5] if 'T' in a.published else '--:--' }}</span>
+          <span class="article-source">{{ a.source }}</span>
+        </div>
+        <div class="article-title">{{ a.title }}</div>
+        <div class="article-summary">{{ a.summary }}</div>
+        <a class="article-link" href="{{ a.url }}" target="_blank" rel="noopener">
+          Ler matéria original →
+        </a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-slot">Ainda sem notícias de IA hoje</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ABA TECH -->
+<div class="tab-panel" id="panel-tech">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot tech"></span>
+      <span class="slot-label tech">Tecnologia</span>
+      <span class="slot-count">{{ tech_articles|length }} notícias</span>
+    </div>
+    {% if tech_articles %}
+      {% for a in tech_articles %}
+      <div class="article" data-searchable="{{ a.title }} {{ a.summary }} {{ a.source }}">
+        <div class="article-meta">
+          <span class="article-time">{{ a.published.split('T')[1][:5] if 'T' in a.published else '--:--' }}</span>
+          <span class="article-source">{{ a.source }}</span>
+        </div>
+        <div class="article-title">{{ a.title }}</div>
+        <div class="article-summary">{{ a.summary }}</div>
+        <a class="article-link" href="{{ a.url }}" target="_blank" rel="noopener">
+          Ler matéria original →
+        </a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-slot">Ainda sem notícias de tecnologia hoje</div>
+    {% endif %}
+  </div>
 </div>
 
 <div class="search-empty" id="searchEmpty">Nenhuma notícia encontrada</div>
 
-<div class="footer">Notícias IA &nbsp;·&nbsp; Professora Crypto</div>
+<div class="footer">Notícias &nbsp;·&nbsp; Professora Crypto</div>
 
 <div class="fab-group">
-  <button class="fab" id="fabSearch" onclick="toggleSearch()" title="Buscar">🔍</button>
   <button class="fab" onclick="window.scrollBy({top: window.innerHeight * 0.85, behavior:'smooth'})" title="↓">↓</button>
 </div>
 
 <script>
+  let currentTab = 'ia';
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('panel-ia').classList.toggle('active', tab === 'ia');
+    document.getElementById('panel-tech').classList.toggle('active', tab === 'tech');
+
+    const btnIa = document.getElementById('tab-ia');
+    const btnTech = document.getElementById('tab-tech');
+    btnIa.className = 'tab-btn' + (tab === 'ia' ? ' active-ia' : '');
+    btnTech.className = 'tab-btn' + (tab === 'tech' ? ' active-tech' : '');
+
+    // Clear search when switching tabs
+    const input = document.getElementById('searchInput');
+    if (input.value) { input.value = ''; filterNews(''); }
+  }
+
   function toggleSearch() {
     const bar = document.getElementById('searchBar');
     const btn = document.getElementById('fabSearch');
     const open = bar.classList.toggle('open');
-    btn.classList.toggle('active', open);
     if (open) document.getElementById('searchInput').focus();
     else { filterNews(''); document.getElementById('searchInput').value = ''; }
   }
 
   function filterNews(q) {
     const term = q.toLowerCase().trim();
-    const items = document.querySelectorAll('.article');
-    const sections = document.querySelectorAll('.slot-section');
+    const panel = document.getElementById('panel-' + currentTab);
+    const items = panel.querySelectorAll('.article');
     let any = false;
 
     items.forEach(item => {
       const match = !term || (item.dataset.searchable || '').toLowerCase().includes(term);
       item.classList.toggle('hidden', !match);
       if (match) any = true;
-    });
-
-    sections.forEach(sec => {
-      const visible = sec.querySelectorAll('.article:not(.hidden)').length > 0;
-      sec.style.display = (!term || visible) ? '' : 'none';
     });
 
     document.getElementById('searchEmpty').style.display = (term && !any) ? 'block' : 'none';

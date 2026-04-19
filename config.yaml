@@ -36,6 +36,36 @@ feeds:
     - https://www.superhuman.ai/rss
     - https://www.marktechpost.com/feed/
 
+  tecnologia:
+    # Internacional — tech geral
+    - https://techcrunch.com/feed/
+    - https://www.theverge.com/rss/index.xml
+    - https://www.engadget.com/rss.xml
+    - https://feeds.arstechnica.com/arstechnica/index
+    - https://gizmodo.com/rss
+    - https://www.cnet.com/rss/news/
+    - https://www.wired.com/feed/rss
+    - https://www.theguardian.com/technology/rss
+    # Ciência e curiosidades
+    - https://interestingengineering.com/feed
+    - https://www.newscientist.com/feed/home
+    - https://futurism.com/feed
+    - https://www.sciencealert.com/feed
+    - https://singularityhub.com/feed
+    - https://what-if.xkcd.com/feed.atom
+    # Comunidade tech (Reddit RSS nativo)
+    - https://www.reddit.com/r/Futurology/.rss
+    - https://www.reddit.com/r/technology/.rss
+    - https://www.reddit.com/r/interestingasfuck/.rss
+    # Hacker News
+    - https://news.ycombinator.com/rss
+    # Português — Brasil
+    - https://tecnoblog.net/feed/
+    - https://www.tecmundo.com.br/feed
+    - https://olhardigital.com.br/feed/
+    - https://www.techtudo.com.br/rss2.xml
+    - https://www.canaltech.com.br/rss/
+
 keywords:
   - artificial intelligence
   - machine learning
@@ -98,10 +128,54 @@ schedule:
     - "16:00"
     - "22:00"
 
+tech_keywords:
+  - smartphone
+  - gadget
+  - app
+  - software
+  - hardware
+  - startup
+  - chip
+  - processador
+  - celular
+  - iphone
+  - android
+  - apple
+  - google
+  - microsoft
+  - samsung
+  - metaverso
+  - realidade virtual
+  - realidade aumentada
+  - wearable
+  - drone
+  - robô
+  - robótica
+  - quantum
+  - computação quântica
+  - cibersegurança
+  - hacker
+  - privacidade
+  - dados
+  - cloud
+  - nuvem
+  - 5g
+  - internet das coisas
+  - iot
+  - biotecnologia
+  - espaço
+  - satélite
+  - elétrico
+  - tesla
+  - spacex
+  - tecnologia
+  - inovação
+
 output:
   summary_lines: 12
   language: pt-BR
   max_articles_per_run: 15
+  max_tech_articles_per_run: 10
 
 database:
   path: storage/news.db

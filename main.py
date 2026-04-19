@@ -64,61 +64,81 @@ def run_pipeline(slot: str) -> None:
     print("━" * 50)
     print()
 
+    from utils.helpers import titles_similar
+
     # 1. Fetch
     log.info("Buscando feeds RSS...")
     raw = fetch_all(config)
 
+    # Split by category
+    raw_ia = [a for a in raw if a.get("feed_category") != "tech"]
+    raw_tech = [a for a in raw if a.get("feed_category") == "tech"]
+
     # 2. Date filter
     log.info(f"Filtrando por janela de tempo [{slot}]...")
-    windowed = filter_by_window(raw, slot, reference)
+    windowed_ia = filter_by_window(raw_ia, slot, reference)
+    windowed_tech = filter_by_window(raw_tech, slot, reference)
 
-    # 3. AI keyword filter
+    # 3. Keyword filters
     log.info("Filtrando por palavras-chave de IA...")
-    ai_articles = filter_by_keywords(windowed, config["keywords"])
+    ai_articles = filter_by_keywords(windowed_ia, config["keywords"])
+
+    log.info("Filtrando por palavras-chave de tecnologia...")
+    tech_articles = filter_by_keywords(windowed_tech, config.get("tech_keywords", []))
 
     # 4. Deduplication
     log.info("Removendo duplicatas...")
     existing_titles = get_titles_for_date(db_path, run_date)
-    unique = []
-    from utils.helpers import titles_similar
-    for a in ai_articles:
-        if url_exists(db_path, a["url"]):
-            log.debug(f"URL duplicada: {a['url']}")
-            continue
-        if any(titles_similar(a["title"], t) for t in existing_titles):
-            log.debug(f"Título similar já existe: {a['title'][:60]}")
-            continue
-        unique.append(a)
-        existing_titles.append(a["title"])
 
-    log.info(f"Artigos únicos para processar: {len(unique)}")
+    def deduplicate(articles, existing):
+        unique = []
+        for a in articles:
+            if url_exists(db_path, a["url"]):
+                continue
+            if any(titles_similar(a["title"], t) for t in existing):
+                continue
+            unique.append(a)
+            existing.append(a["title"])
+        return unique
 
-    max_articles = config["output"].get("max_articles_per_run", 15)
-    unique = unique[:max_articles]
+    unique_ia = deduplicate(ai_articles, existing_titles)
+    unique_tech = deduplicate(tech_articles, existing_titles)
 
-    if not unique:
+    max_ia = config["output"].get("max_articles_per_run", 15)
+    max_tech = config["output"].get("max_tech_articles_per_run", 10)
+    unique_ia = unique_ia[:max_ia]
+    unique_tech = unique_tech[:max_tech]
+
+    log.info(f"IA: {len(unique_ia)} artigos únicos | Tech: {len(unique_tech)} artigos únicos")
+
+    # 5. Summarize with Claude
+    summarized_ia, summarized_tech = [], []
+    if unique_ia:
+        log.info(f"Resumindo {len(unique_ia)} artigos de IA com Claude...")
+        summarized_ia = summarize(unique_ia, api_key, run_date)
+    if unique_tech:
+        log.info(f"Resumindo {len(unique_tech)} artigos de tech com Claude...")
+        summarized_tech = summarize(unique_tech, api_key, run_date)
+
+    if not summarized_ia and not summarized_tech:
         log.warning("Nenhuma notícia nova encontrada nesta rodada.")
-        # Still generate/update the page so navigation stays consistent
         url = generate_and_deploy(
-            [], slot, db_path, output_base, netlify_token, netlify_site_id
+            [], [], slot, db_path, output_base, netlify_token, netlify_site_id
         )
         print(f"Página atualizada: {url}")
         print()
         return
 
-    # 5. Summarize with Claude
-    log.info(f"Resumindo {len(unique)} artigos com Claude...")
-    summarized = summarize(unique, api_key, run_date)
-
     # 6. Generate HTML + Deploy
     log.info("Gerando página e fazendo deploy...")
     url = generate_and_deploy(
-        summarized, slot, db_path, output_base, netlify_token, netlify_site_id
+        summarized_ia, summarized_tech, slot, db_path, output_base, netlify_token, netlify_site_id
     )
 
+    total = len(summarized_ia) + len(summarized_tech)
     print()
     print("━" * 50)
-    print(f"  ✅  {len(summarized)} notícias publicadas!")
+    print(f"  ✅  {total} notícias publicadas! (IA: {len(summarized_ia)} | Tech: {len(summarized_tech)})")
     print(f"  🔗  {url}")
     print("━" * 50)
     print()

@@ -28,13 +28,19 @@ def init_db(db_path: str) -> None:
                 slot        TEXT NOT NULL,
                 run_date    TEXT NOT NULL,
                 summary     TEXT,
-                fetched_at  TEXT NOT NULL
+                fetched_at  TEXT NOT NULL,
+                category    TEXT NOT NULL DEFAULT 'ia'
             );
             CREATE INDEX IF NOT EXISTS idx_url        ON articles(url);
             CREATE INDEX IF NOT EXISTS idx_run_date   ON articles(run_date);
             CREATE INDEX IF NOT EXISTS idx_slot       ON articles(slot);
             CREATE INDEX IF NOT EXISTS idx_published  ON articles(published);
         """)
+        # Migration: add category column if DB already existed without it
+        try:
+            conn.execute("ALTER TABLE articles ADD COLUMN category TEXT NOT NULL DEFAULT 'ia'")
+        except Exception:
+            pass
 
 
 def url_exists(db_path: str, url: str) -> bool:
@@ -60,15 +66,16 @@ def insert_article(
     slot: str,
     run_date: str,
     summary: str,
+    category: str = "ia",
 ) -> None:
     try:
         with _conn(db_path) as conn:
             conn.execute(
                 """INSERT OR IGNORE INTO articles
-                   (url, title, source, published, slot, run_date, summary, fetched_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                   (url, title, source, published, slot, run_date, summary, fetched_at, category)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (url, title, source, published, slot, run_date, summary,
-                 datetime.now(timezone.utc).isoformat()),
+                 datetime.now(timezone.utc).isoformat(), category),
             )
     except sqlite3.Error as e:
         log.error(f"DB insert error: {e}")

@@ -2,9 +2,9 @@ import crypto from 'node:crypto';
 import Anthropic from '@anthropic-ai/sdk';
 import Parser from 'rss-parser';
 
-// ─── CONFIG ────────────────────────────────────────────────────────────────
+// ─── CONFIG — IA ────────────────────────────────────────────────────────────
 
-const FEEDS = [
+export const IA_FEEDS = [
   'https://techcrunch.com/category/artificial-intelligence/feed/',
   'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
   'https://venturebeat.com/category/ai/feed/',
@@ -25,7 +25,7 @@ const FEEDS = [
   'https://www.marktechpost.com/feed/',
 ];
 
-const KEYWORDS = [
+export const IA_KEYWORDS = [
   'artificial intelligence','machine learning','deep learning','LLM','GPT',
   'Claude','Gemini','Llama','Mistral','neural network','computer vision',
   'NLP','generative AI','diffusion model','transformer','inteligência artificial',
@@ -34,6 +34,50 @@ const KEYWORDS = [
   'OpenAI','Anthropic','Google DeepMind','Stability AI','Midjourney',
   'Perplexity','Grok','xAI','Cursor','Copilot','Sora','Runway',
   'ElevenLabs','Cohere','DeepSeek','Qwen','Gemma','GPT-4','GPT-5','o3','o4',
+];
+
+// ─── CONFIG — TECNOLOGIA ────────────────────────────────────────────────────
+
+export const TECH_FEEDS = [
+  // Internacional — tech geral
+  'https://techcrunch.com/feed/',
+  'https://www.theverge.com/rss/index.xml',
+  'https://www.engadget.com/rss.xml',
+  'https://feeds.arstechnica.com/arstechnica/index',
+  'https://gizmodo.com/rss',
+  'https://www.cnet.com/rss/news/',
+  'https://www.wired.com/feed/rss',
+  'https://www.theguardian.com/technology/rss',
+  // Ciência e curiosidades
+  'https://interestingengineering.com/feed',
+  'https://www.newscientist.com/feed/home',
+  'https://futurism.com/feed',
+  'https://www.sciencealert.com/feed',
+  'https://singularityhub.com/feed',
+  'https://what-if.xkcd.com/feed.atom',
+  // Comunidade tech (Reddit RSS nativo)
+  'https://www.reddit.com/r/Futurology/.rss',
+  'https://www.reddit.com/r/technology/.rss',
+  'https://www.reddit.com/r/interestingasfuck/.rss',
+  // Hacker News
+  'https://news.ycombinator.com/rss',
+  // Português — Brasil
+  'https://tecnoblog.net/feed/',
+  'https://www.tecmundo.com.br/feed',
+  'https://olhardigital.com.br/feed/',
+  'https://www.techtudo.com.br/rss2.xml',
+  'https://www.canaltech.com.br/rss/',
+];
+
+export const TECH_KEYWORDS = [
+  'smartphone','gadget','app','software','hardware','startup','chip',
+  'processador','celular','iphone','android','apple','google','microsoft',
+  'samsung','metaverso','realidade virtual','realidade aumentada','wearable',
+  'drone','robô','robótica','quantum','computação quântica','cibersegurança',
+  'hacker','privacidade','dados','cloud','nuvem','5g','internet das coisas',
+  'iot','biotecnologia','espaço','satélite','elétrico','tesla','spacex',
+  'tecnologia','inovação','ciência','descoberta','invenção','futuro',
+  'tech','device','battery','electric','rocket','biology','physics','space',
 ];
 
 const SLOT_WINDOWS = {
@@ -45,7 +89,6 @@ const SLOT_WINDOWS = {
 // ─── HELPERS ───────────────────────────────────────────────────────────────
 
 function nowBR() {
-  // BRT = UTC-3 (Brasil aboliu horário de verão em 2019)
   return new Date(Date.now() - 3 * 60 * 60 * 1000);
 }
 
@@ -66,11 +109,11 @@ function escapeHTML(s) {
 
 // ─── RSS FETCH ─────────────────────────────────────────────────────────────
 
-export async function fetchFeeds() {
+export async function fetchFeeds(feedList) {
   const parser = new Parser({ timeout: 10000 });
 
   const results = await Promise.allSettled(
-    FEEDS.map(url =>
+    feedList.map(url =>
       parser.parseURL(url).then(feed => ({ url, feed }))
     )
   );
@@ -98,7 +141,7 @@ export async function fetchFeeds() {
     }
   }
 
-  console.log(`Total coletado: ${articles.length} artigos de ${FEEDS.length} fontes`);
+  console.log(`Total coletado: ${articles.length} artigos de ${feedList.length} fontes`);
   return articles;
 }
 
@@ -106,7 +149,6 @@ export async function fetchFeeds() {
 
 export function filterByWindow(articles, slot) {
   const w = SLOT_WINDOWS[slot];
-  // Trabalha em UTC real — BRT = UTC-3, então hora BRT + 3 = hora UTC
   const now = new Date();
 
   const endH_utc = (w.endH + 3) % 24;
@@ -125,17 +167,17 @@ export function filterByWindow(articles, slot) {
   return filtered;
 }
 
-export function filterByKeywords(articles) {
+export function filterByKeywords(articles, keywords) {
   const filtered = articles.filter(a => {
     const text = (a.title + ' ' + (a.summary || '')).toLowerCase();
-    return KEYWORDS.some(kw => text.includes(kw.toLowerCase()));
+    return keywords.some(kw => text.includes(kw.toLowerCase()));
   });
   console.log(`Após filtro de keywords: ${filtered.length}`);
   return filtered;
 }
 
-export function deduplicate(articles) {
-  const seen = new Set();
+export function deduplicate(articles, existingUrls = new Set()) {
+  const seen = new Set(existingUrls);
   return articles.filter(a => {
     if (seen.has(a.url)) return false;
     seen.add(a.url);
@@ -177,7 +219,23 @@ const MONTHS_PT = [
   'julho','agosto','setembro','outubro','novembro','dezembro',
 ];
 
-export function generateHTML(articles, today, prevSlug, nextSlug) {
+function articleCard(a) {
+  const brtH = a.published ? ((a.published.getUTCHours() - 3 + 24) % 24) : null;
+  const h   = brtH !== null ? String(brtH).padStart(2, '0') : '--';
+  const min = a.published  ? String(a.published.getUTCMinutes()).padStart(2, '0') : '--';
+  return `
+    <div class="article" data-searchable="${escapeHTML(a.title)} ${escapeHTML(a.summary)} ${escapeHTML(a.source)}">
+      <div class="article-meta">
+        <span class="article-time">${h}:${min}</span>
+        <span class="article-source">${escapeHTML(a.source)}</span>
+      </div>
+      <div class="article-title">${escapeHTML(a.title)}</div>
+      <div class="article-summary">${escapeHTML(a.summary)}</div>
+      <a class="article-link" href="${escapeHTML(a.url)}" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>`;
+}
+
+export function generateHTML(iaArticles, techArticles, today, prevSlug, nextSlug) {
   const date_pt = `${today.getUTCDate()} de ${MONTHS_PT[today.getUTCMonth()]} de ${today.getUTCFullYear()}`.toUpperCase();
   const date_compact = `${String(today.getUTCDate()).padStart(2,'0')} ${MONTHS_PT[today.getUTCMonth()].slice(0,3)} ${today.getUTCFullYear()}`;
 
@@ -189,30 +247,20 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
     : `<span class="page-btn disabled">Próximo →</span>`;
   const hojeBtn = `<a id="btnHoje" class="page-btn" style="display:none;" href="#">Hoje</a>`;
 
-  const articlesHTML = articles.length > 0
-    ? articles.map(a => {
-        const brtH = a.published ? ((a.published.getUTCHours() - 3 + 24) % 24) : null;
-        const h = brtH !== null ? String(brtH).padStart(2, '0') : '--';
-        const min = a.published ? String(a.published.getUTCMinutes()).padStart(2, '0') : '--';
-        return `
-    <div class="article" data-searchable="${escapeHTML(a.title)} ${escapeHTML(a.summary)} ${escapeHTML(a.source)}">
-      <div class="article-meta">
-        <span class="article-time">${h}:${min}</span>
-        <span class="article-source">${escapeHTML(a.source)}</span>
-      </div>
-      <div class="article-title">${escapeHTML(a.title)}</div>
-      <div class="article-summary">${escapeHTML(a.summary)}</div>
-      <a class="article-link" href="${escapeHTML(a.url)}" target="_blank" rel="noopener">Ler matéria original →</a>
-    </div>`;
-      }).join('\n')
-    : '<div class="empty-slot">Ainda sem notícias hoje</div>';
+  const iaHTML = iaArticles.length > 0
+    ? iaArticles.map(articleCard).join('\n')
+    : '<div class="empty-slot">Ainda sem notícias de IA hoje</div>';
+
+  const techHTML = techArticles.length > 0
+    ? techArticles.map(articleCard).join('\n')
+    : '<div class="empty-slot">Ainda sem notícias de tecnologia hoje</div>';
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notícias IA — Professora Crypto</title>
+<title>Notícias — Professora Crypto</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #080810; color: #ddd; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; }
@@ -226,14 +274,33 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
   .page-btn:hover { border-color: #444; color: #aaa; }
   .page-btn.disabled { opacity: 0.2; pointer-events: none; }
   .page-current { font-size: 12px; color: #2a2a2a; letter-spacing: 2px; }
-  .slot-nav { display: flex; justify-content: center; gap: 6px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; background: #080810; position: sticky; top: 0; z-index: 100; }
-  .slot-tab.search { color: #555; border-color: #222; background: #111; padding: 6px 18px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid; cursor: pointer; transition: opacity 0.15s; }
+  /* TABS */
+  .tabs-nav { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; background: #080810; position: sticky; top: 0; z-index: 100; }
+  .tab-btn { padding: 6px 20px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid #1a1a1a; background: transparent; color: #444; cursor: pointer; transition: .15s; }
+  .tab-btn:hover { border-color: #444; color: #aaa; }
+  .tab-btn.active-ia { background: #1a0a3a; border-color: #5b21b6; color: #a78bfa; }
+  .tab-btn.active-tech { background: #0a1f3a; border-color: #1d4ed8; color: #60a5fa; }
+  .tab-search { margin-left: auto; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid #1a1a1a; background: transparent; color: #444; cursor: pointer; transition: .15s; }
+  .tab-search:hover { border-color: #444; color: #aaa; }
+  /* SEARCH */
   .search-bar { display: none; padding: 12px 24px; background: #0d0d0d; border-bottom: 1px solid #111; }
   .search-bar.open { display: block; }
   .search-input { width: 100%; max-width: 600px; display: block; margin: 0 auto; background: #111; border: 1px solid #1e1e1e; color: #ddd; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
   .search-input:focus { border-color: #444; }
   .search-input::placeholder { color: #333; }
+  /* PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
   .slot-section { max-width: 760px; margin: 0 auto; padding: 48px 24px; border-bottom: 1px solid #0d0d0d; }
+  .slot-header { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; padding-bottom: 18px; border-bottom: 1px solid #111; }
+  .slot-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .slot-dot.ia { background: #7c3aed; }
+  .slot-dot.tech { background: #2563eb; }
+  .slot-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  .slot-label.ia { color: #a78bfa; }
+  .slot-label.tech { color: #60a5fa; }
+  .slot-count { font-size: 11px; color: #222; margin-left: auto; letter-spacing: 1px; }
+  /* ARTICLES */
   .article { padding: 28px 0; border-bottom: 1px solid #0f0f0f; }
   .article:last-child { border-bottom: none; padding-bottom: 0; }
   .article.hidden { display: none; }
@@ -250,14 +317,13 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
   .fab-group { position: fixed; bottom: 28px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
   .fab { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #1a1a1a; background: #0f0f0f; color: #444; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: .2s; }
   .fab:hover { border-color: #444; color: #ccc; }
-  .fab.active { border-color: #555; color: #fff; }
-  @media (max-width: 600px) { .hero-title { font-size: 34px; } .slot-section { padding: 32px 16px; } .article-title { font-size: 17px; } }
+  @media (max-width: 600px) { .hero-title { font-size: 34px; } .slot-section { padding: 32px 16px; } .article-title { font-size: 17px; } .tabs-nav { gap: 4px; padding: 12px 16px; } .tab-btn { padding: 6px 12px; font-size: 10px; } }
 </style>
 </head>
 <body>
 <div class="hero">
-  <div class="hero-label">Inteligência Artificial</div>
-  <div class="hero-title">NOTÍCIAS IA</div>
+  <div class="hero-label">Inteligência Artificial &amp; Tecnologia</div>
+  <div class="hero-title">NOTÍCIAS</div>
   <div class="hero-sub">Professora Crypto</div>
   <div class="hero-date">${date_pt}</div>
 </div>
@@ -267,23 +333,43 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
   ${nextBtn}
   ${hojeBtn}
 </div>
-<div class="slot-nav">
-  <button class="slot-tab search" onclick="toggleSearch()">🔍</button>
+<div class="tabs-nav">
+  <button class="tab-btn active-ia" id="tab-ia" onclick="switchTab('ia')">🤖 Inteligência Artificial</button>
+  <button class="tab-btn" id="tab-tech" onclick="switchTab('tech')">💡 Tecnologia</button>
+  <button class="tab-search" onclick="toggleSearch()">🔍</button>
 </div>
 <div class="search-bar" id="searchBar">
   <input class="search-input" id="searchInput" type="text" placeholder="Buscar notícias..." oninput="filterNews(this.value)">
 </div>
-<div class="slot-section">
-  ${articlesHTML}
+<!-- ABA IA -->
+<div class="tab-panel active" id="panel-ia">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot ia"></span>
+      <span class="slot-label ia">Inteligência Artificial</span>
+      <span class="slot-count">${iaArticles.length} notícias</span>
+    </div>
+    ${iaHTML}
+  </div>
+</div>
+<!-- ABA TECH -->
+<div class="tab-panel" id="panel-tech">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot tech"></span>
+      <span class="slot-label tech">Tecnologia</span>
+      <span class="slot-count">${techArticles.length} notícias</span>
+    </div>
+    ${techHTML}
+  </div>
 </div>
 <div class="search-empty" id="searchEmpty">Nenhuma notícia encontrada</div>
-<div class="footer">Notícias IA &nbsp;·&nbsp; Professora Crypto</div>
+<div class="footer">Notícias &nbsp;·&nbsp; Professora Crypto</div>
 <div class="fab-group">
-  <button class="fab" id="fabSearch" onclick="toggleSearch()" title="Buscar">🔍</button>
   <button class="fab" onclick="window.scrollBy({top: window.innerHeight * 0.85, behavior:'smooth'})" title="↓">↓</button>
 </div>
 <script>
-  // Botão "Hoje" — aparece apenas quando não estamos na página de hoje
+  let currentTab = 'ia';
   (function() {
     function todayBRT() {
       const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
@@ -295,22 +381,27 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
     const parts = window.location.pathname.split('/').filter(Boolean);
     const current = parts[parts.length - 1] || '';
     const btn = document.getElementById('btnHoje');
-    if (btn && current !== today) {
-      btn.href = '/' + today + '/';
-      btn.style.display = 'inline-flex';
-    }
+    if (btn && current !== today) { btn.href = '/' + today + '/'; btn.style.display = 'inline-flex'; }
   })();
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('panel-ia').classList.toggle('active', tab === 'ia');
+    document.getElementById('panel-tech').classList.toggle('active', tab === 'tech');
+    document.getElementById('tab-ia').className = 'tab-btn' + (tab === 'ia' ? ' active-ia' : '');
+    document.getElementById('tab-tech').className = 'tab-btn' + (tab === 'tech' ? ' active-tech' : '');
+    const input = document.getElementById('searchInput');
+    if (input.value) { input.value = ''; filterNews(''); }
+  }
   function toggleSearch() {
     const bar = document.getElementById('searchBar');
-    const btn = document.getElementById('fabSearch');
     const open = bar.classList.toggle('open');
-    btn.classList.toggle('active', open);
     if (open) document.getElementById('searchInput').focus();
     else { filterNews(''); document.getElementById('searchInput').value = ''; }
   }
   function filterNews(q) {
     const term = q.toLowerCase().trim();
-    const items = document.querySelectorAll('.article');
+    const panel = document.getElementById('panel-' + currentTab);
+    const items = panel.querySelectorAll('.article');
     let any = false;
     items.forEach(item => {
       const match = !term || (item.dataset.searchable || '').toLowerCase().includes(term);
@@ -329,7 +420,6 @@ export function generateHTML(articles, today, prevSlug, nextSlug) {
 export async function deployToNetlify(slug, htmlContent, token, siteId) {
   const authHeaders = { Authorization: `Bearer ${token}` };
 
-  // 1. Busca hashes dos arquivos do deploy atual (para preservar histórico)
   let existingHashes = {};
   try {
     const siteResp = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, { headers: authHeaders });
@@ -345,10 +435,9 @@ export async function deployToNetlify(slug, htmlContent, token, siteId) {
     console.warn('Não foi possível buscar deploy existente:', e.message);
   }
 
-  // 2. Prepara novos arquivos
   const htmlBuf = Buffer.from(htmlContent, 'utf-8');
   const redirectBuf = Buffer.from(
-    `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/${slug}/"><title>Notícias IA</title></head><body><script>window.location.replace("/${slug}/")<\/script></body></html>`,
+    `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/${slug}/"><title>Notícias</title></head><body><script>window.location.replace("/${slug}/")<\/script></body></html>`,
     'utf-8'
   );
 
@@ -357,13 +446,11 @@ export async function deployToNetlify(slug, htmlContent, token, siteId) {
     '/index.html': redirectBuf,
   };
 
-  // 3. Combina hashes existentes + novos
   const allHashes = { ...existingHashes };
   for (const [path, buf] of Object.entries(newFiles)) {
     allHashes[path] = sha1(buf);
   }
 
-  // 4. Cria novo deploy
   const deployResp = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
     method: 'POST',
     headers: { ...authHeaders, 'Content-Type': 'application/json' },
@@ -377,18 +464,12 @@ export async function deployToNetlify(slug, htmlContent, token, siteId) {
   const required = new Set(deployData.required || []);
   console.log(`Deploy criado: ${deployId} — uploads necessários: ${required.size}`);
 
-  // 5. Faz upload apenas dos arquivos novos/alterados
   for (const [path, buf] of Object.entries(newFiles)) {
     const hash = sha1(buf);
     if (!required.has(hash)) continue;
-
     const upResp = await fetch(
       `https://api.netlify.com/api/v1/deploys/${deployId}/files${path}`,
-      {
-        method: 'PUT',
-        headers: { ...authHeaders, 'Content-Type': 'application/octet-stream' },
-        body: buf,
-      }
+      { method: 'PUT', headers: { ...authHeaders, 'Content-Type': 'application/octet-stream' }, body: buf }
     );
     if (!upResp.ok) {
       throw new Error(`Upload error ${upResp.status} for ${path}: ${await upResp.text()}`);
@@ -413,33 +494,47 @@ export async function runBot(slot) {
   if (!siteId) throw new Error('NETLIFY_SITE_ID não definida');
 
   console.log(`\n${'─'.repeat(50)}`);
-  console.log(`  NOTÍCIAS IA — rodada: ${slot.toUpperCase()}`);
+  console.log(`  NOTÍCIAS — rodada: ${slot.toUpperCase()}`);
   console.log(`${'─'.repeat(50)}\n`);
 
   const today = nowBR();
   const slug = dateSlug(today);
 
-  // Pipeline
-  const raw = await fetchFeeds();
-  const windowed = filterByWindow(raw, slot);
-  const filtered = filterByKeywords(windowed);
-  const unique = deduplicate(filtered).slice(0, 15);
+  // Busca feeds em paralelo
+  console.log('Buscando feeds de IA...');
+  const [rawIA, rawTech] = await Promise.all([
+    fetchFeeds(IA_FEEDS),
+    fetchFeeds(TECH_FEEDS),
+  ]);
 
-  console.log(`Artigos para resumir: ${unique.length}`);
+  // Filtra por janela de tempo
+  const windowedIA = filterByWindow(rawIA, slot);
+  const windowedTech = filterByWindow(rawTech, slot);
 
-  if (unique.length === 0) {
-    console.log('Nenhuma notícia nova. Gerando página vazia...');
-  }
+  // Filtra por keywords
+  const filteredIA = filterByKeywords(windowedIA, IA_KEYWORDS);
+  const filteredTech = filterByKeywords(windowedTech, TECH_KEYWORDS);
 
-  const articles = unique.length > 0 ? await summarize(unique, apiKey) : [];
+  // Deduplica (URLs únicas entre as duas listas)
+  const seenUrls = new Set();
+  const uniqueIA = deduplicate(filteredIA, seenUrls).slice(0, 15);
+  uniqueIA.forEach(a => seenUrls.add(a.url));
+  const uniqueTech = deduplicate(filteredTech, seenUrls).slice(0, 10);
 
-  // Determina navegação (prev/next) baseado nos arquivos existentes no Netlify
+  console.log(`IA: ${uniqueIA.length} artigos únicos | Tech: ${uniqueTech.length} artigos únicos`);
+
+  // Resumo com Claude (em paralelo)
+  const [iaArticles, techArticles] = await Promise.all([
+    uniqueIA.length > 0 ? summarize(uniqueIA, apiKey) : Promise.resolve([]),
+    uniqueTech.length > 0 ? summarize(uniqueTech, apiKey) : Promise.resolve([]),
+  ]);
+
+  // Navegação prev/next
   const prevDate = new Date(today); prevDate.setUTCDate(prevDate.getUTCDate() - 1);
   const nextDate = new Date(today); nextDate.setUTCDate(nextDate.getUTCDate() + 1);
   const prevSlug = dateSlug(prevDate);
   const nextSlug = dateSlug(nextDate);
 
-  // Verifica se prev/next existem no deploy atual
   let prevExists = false, nextExists = false;
   try {
     const authHeaders = { Authorization: `Bearer ${token}` };
@@ -455,10 +550,14 @@ export async function runBot(slot) {
     }
   } catch {}
 
-  const html = generateHTML(articles, today, prevExists ? prevSlug : null, nextExists ? nextSlug : null);
+  const html = generateHTML(
+    iaArticles, techArticles, today,
+    prevExists ? prevSlug : null,
+    nextExists ? nextSlug : null,
+  );
   const url = await deployToNetlify(slug, html, token, siteId);
 
-  console.log(`\n✅ ${articles.length} notícias publicadas!`);
+  console.log(`\n✅ IA: ${iaArticles.length} | Tech: ${techArticles.length} notícias publicadas!`);
   console.log(`🔗 ${url}\n`);
 
   return url;

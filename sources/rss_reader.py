@@ -95,10 +95,12 @@ def _fetch_feed(feed_url: str, config: dict, delay_range: tuple) -> list[dict]:
 
 
 def fetch_all(config: dict) -> list[dict]:
-    """Fetch all feeds in parallel. Returns raw article list."""
-    all_urls = []
-    for urls in config.get("feeds", {}).values():
-        all_urls.extend(urls)
+    """Fetch all feeds in parallel. Returns raw article list with feed_category."""
+    all_urls = []  # list of (url, category)
+    for category, urls in config.get("feeds", {}).items():
+        feed_cat = "tech" if category == "tecnologia" else "ia"
+        for url in urls:
+            all_urls.append((url, feed_cat))
 
     delay_range = (
         config["http"]["min_delay"],
@@ -108,12 +110,15 @@ def fetch_all(config: dict) -> list[dict]:
     articles: list[dict] = []
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = {
-            executor.submit(_fetch_feed, url, config, delay_range): url
-            for url in all_urls
+            executor.submit(_fetch_feed, url, config, delay_range): (url, cat)
+            for url, cat in all_urls
         }
         for future in as_completed(futures):
             try:
-                articles.extend(future.result())
+                url, cat = futures[future]
+                for article in future.result():
+                    article["feed_category"] = cat
+                    articles.append(article)
             except Exception as e:
                 log.error(f"Executor error: {e}")
 
