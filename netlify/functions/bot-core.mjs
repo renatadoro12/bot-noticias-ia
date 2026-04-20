@@ -61,12 +61,13 @@ export const TECH_FEEDS = [
   'https://www.reddit.com/r/interestingasfuck/.rss',
   // Hacker News
   'https://news.ycombinator.com/rss',
-  // Português — Brasil
+  // Português — Brasil e Internacional
   'https://tecnoblog.net/feed/',
   'https://www.tecmundo.com.br/feed',
   'https://olhardigital.com.br/feed/',
   'https://www.techtudo.com.br/rss2.xml',
   'https://www.canaltech.com.br/rss/',
+  'https://rss.dw.com/rdf/rss-pt-br-all',
 ];
 
 export const TECH_KEYWORDS = [
