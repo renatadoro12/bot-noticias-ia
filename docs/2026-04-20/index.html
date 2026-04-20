@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notícias — Professora Crypto</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080810; color: #ddd; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; }
+  .hero { padding: 52px 24px 36px; text-align: center; border-bottom: 1px solid #111; }
+  .hero-label { font-size: 11px; letter-spacing: 6px; color: #333; text-transform: uppercase; margin-bottom: 16px; }
+  .hero-title { font-size: 48px; font-weight: 900; background: linear-gradient(135deg, #7c3aed, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -2px; line-height: 1; }
+  .hero-sub { font-size: 13px; color: #2a2a2a; margin-top: 10px; letter-spacing: 1px; }
+  .hero-date { font-size: 12px; color: #333; margin-top: 18px; letter-spacing: 4px; text-transform: uppercase; }
+  .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; }
+  .page-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-decoration: none; border: 1px solid #1a1a1a; color: #444; transition: .2s; text-transform: uppercase; }
+  .page-btn:hover { border-color: #444; color: #aaa; }
+  .page-btn.disabled { opacity: 0.2; pointer-events: none; }
+  .page-current { font-size: 12px; color: #2a2a2a; letter-spacing: 2px; }
+  /* TABS */
+  .tabs-nav { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; background: #080810; position: sticky; top: 0; z-index: 100; }
+  .tab-btn { padding: 6px 20px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid #1a1a1a; background: transparent; color: #444; cursor: pointer; transition: .15s; }
+  .tab-btn:hover { border-color: #444; color: #aaa; }
+  .tab-btn.active-ia { background: #1a0a3a; border-color: #5b21b6; color: #a78bfa; }
+  .tab-btn.active-tech { background: #0a1f3a; border-color: #1d4ed8; color: #60a5fa; }
+  .tab-search { margin-left: auto; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid #1a1a1a; background: transparent; color: #444; cursor: pointer; transition: .15s; }
+  .tab-search:hover { border-color: #444; color: #aaa; }
+  /* SEARCH */
+  .search-bar { display: none; padding: 12px 24px; background: #0d0d0d; border-bottom: 1px solid #111; }
+  .search-bar.open { display: block; }
+  .search-input { width: 100%; max-width: 600px; display: block; margin: 0 auto; background: #111; border: 1px solid #1e1e1e; color: #ddd; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+  .search-input:focus { border-color: #444; }
+  .search-input::placeholder { color: #333; }
+  /* PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .slot-section { max-width: 760px; margin: 0 auto; padding: 48px 24px; border-bottom: 1px solid #0d0d0d; }
+  .slot-header { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; padding-bottom: 18px; border-bottom: 1px solid #111; }
+  .slot-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .slot-dot.ia { background: #7c3aed; }
+  .slot-dot.tech { background: #2563eb; }
+  .slot-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  .slot-label.ia { color: #a78bfa; }
+  .slot-label.tech { color: #60a5fa; }
+  .slot-count { font-size: 11px; color: #222; margin-left: auto; letter-spacing: 1px; }
+  /* ARTICLES */
+  .article { padding: 28px 0; border-bottom: 1px solid #0f0f0f; }
+  .article:last-child { border-bottom: none; padding-bottom: 0; }
+  .article.hidden { display: none; }
+  .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .article-time { font-size: 11px; color: #444; font-weight: 700; background: #111; padding: 3px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+  .article-source { font-size: 11px; color: #2e2e2e; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .article-title { font-size: 20px; font-weight: 700; color: #eee; line-height: 1.4; margin-bottom: 14px; }
+  .article-summary { font-size: 14px; color: #555; line-height: 1.9; margin-bottom: 14px; }
+  .article-link { font-size: 11px; color: #2a2a6a; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; text-decoration: none; transition: color .15s; }
+  .article-link:hover { color: #5555cc; }
+  .empty-slot { color: #222; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-align: center; padding: 20px 0; }
+  .search-empty { display: none; text-align: center; padding: 60px 24px; color: #333; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  .footer { text-align: center; padding: 56px 24px; color: #1a1a1a; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; border-top: 1px solid #0d0d0d; }
+  .fab-group { position: fixed; bottom: 28px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
+  .fab { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #1a1a1a; background: #0f0f0f; color: #444; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: .2s; }
+  .fab:hover { border-color: #444; color: #ccc; }
+  @media (max-width: 600px) { .hero-title { font-size: 34px; } .slot-section { padding: 32px 16px; } .article-title { font-size: 17px; } .tabs-nav { gap: 4px; padding: 12px 16px; } .tab-btn { padding: 6px 12px; font-size: 10px; } }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-label">Inteligência Artificial &amp; Tecnologia</div>
+  <div class="hero-title">NOTÍCIAS</div>
+  <div class="hero-sub">Professora Crypto</div>
+  <div class="hero-date">20 DE ABRIL DE 2026</div>
+</div>
+<div class="pagination">
+  <a class="page-btn" href="../2026-04-19/">← Anterior</a>
+  <span class="page-current">20 abr 2026</span>
+  <span class="page-btn disabled">Próximo →</span>
+  <a id="btnHoje" class="page-btn" style="display:none;" href="#">Hoje</a>
+</div>
+<div class="tabs-nav">
+  <button class="tab-btn active-ia" id="tab-ia" onclick="switchTab('ia')">🤖 Inteligência Artificial</button>
+  <button class="tab-btn" id="tab-tech" onclick="switchTab('tech')">💡 Tecnologia</button>
+  <button class="tab-search" onclick="toggleSearch()">🔍</button>
+</div>
+<div class="search-bar" id="searchBar">
+  <input class="search-input" id="searchInput" type="text" placeholder="Buscar notícias..." oninput="filterNews(this.value)">
+</div>
+<!-- ABA IA -->
+<div class="tab-panel active" id="panel-ia">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot ia"></span>
+      <span class="slot-label ia">Inteligência Artificial</span>
+      <span class="slot-count">15 notícias</span>
+    </div>
+    
+    <div class="article" data-searchable="LLM Reasoning Is Latent, Not the Chain of Thought O estudo demonstra que o raciocínio dos modelos de linguagem de grande escala (LLMs) ocorre internamente de forma latente, não sendo necessariamente refletido explicitamente nas cadeias de pensamento (chain of thought) que produzem. Isso sugere que o raciocínio complexo acontece nos processos internos do modelo, independentemente de ser verbalizado ou explicado passo a passo. A pesquisa questiona a eficácia de se confiar apenas nas explicações textuais dos LLMs como indicadores confiáveis de seu verdadeiro processo de raciocínio. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">LLM Reasoning Is Latent, Not the Chain of Thought</div>
+      <div class="article-summary">O estudo demonstra que o raciocínio dos modelos de linguagem de grande escala (LLMs) ocorre internamente de forma latente, não sendo necessariamente refletido explicitamente nas cadeias de pensamento (chain of thought) que produzem. Isso sugere que o raciocínio complexo acontece nos processos internos do modelo, independentemente de ser verbalizado ou explicado passo a passo. A pesquisa questiona a eficácia de se confiar apenas nas explicações textuais dos LLMs como indicadores confiáveis de seu verdadeiro processo de raciocínio.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15726" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Structured Abductive-Deductive-Inductive Reasoning for LLMs via Algebraic Invariants O artigo propõe um método estruturado que combina raciocínio abdutivo, dedutivo e indutivo para melhorar o desempenho de modelos de linguagem de grande escala (LLMs), utilizando invariantes algébricas como estrutura. A abordagem visa corrigir limitações lógicas dos modelos atuais, permitindo que eles sigam caminhos de raciocínio mais rigorosos e consistentes. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Structured Abductive-Deductive-Inductive Reasoning for LLMs via Algebraic Invariants</div>
+      <div class="article-summary">O artigo propõe um método estruturado que combina raciocínio abdutivo, dedutivo e indutivo para melhorar o desempenho de modelos de linguagem de grande escala (LLMs), utilizando invariantes algébricas como estrutura. A abordagem visa corrigir limitações lógicas dos modelos atuais, permitindo que eles sigam caminhos de raciocínio mais rigorosos e consistentes.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15727" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Experience Compression Spectrum: Unifying Memory, Skills, and Rules in LLM Agents O artigo propõe o Experience Compression Spectrum, um framework que unifica memória, habilidades e regras em agentes baseados em modelos de linguagem grandes (LLMs). A abordagem busca melhorar a eficiência e capacidade de generalização desses agentes através da compressão e organização integrada dessas três dimensões de conhecimento. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Experience Compression Spectrum: Unifying Memory, Skills, and Rules in LLM Agents</div>
+      <div class="article-summary">O artigo propõe o Experience Compression Spectrum, um framework que unifica memória, habilidades e regras em agentes baseados em modelos de linguagem grandes (LLMs). A abordagem busca melhorar a eficiência e capacidade de generalização desses agentes através da compressão e organização integrada dessas três dimensões de conhecimento.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15877" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Integrating Graphs, Large Language Models, and Agents: Reasoning and Retrieval O artigo explora a integração de grafos, modelos de linguagem grandes (LLMs) e agentes autônomos para melhorar capacidades de raciocínio e recuperação de informações. A combinação dessas tecnologias permite que sistemas de IA realizem buscas mais inteligentes e tomem decisões baseadas em estruturas de conhecimento complexas. A abordagem representa um avanço significativo na criação de sistemas que conseguem raciocinar sobre dados estruturados enquanto mantêm a flexibilidade dos LLMs. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Integrating Graphs, Large Language Models, and Agents: Reasoning and Retrieval</div>
+      <div class="article-summary">O artigo explora a integração de grafos, modelos de linguagem grandes (LLMs) e agentes autônomos para melhorar capacidades de raciocínio e recuperação de informações. A combinação dessas tecnologias permite que sistemas de IA realizem buscas mais inteligentes e tomem decisões baseadas em estruturas de conhecimento complexas. A abordagem representa um avanço significativo na criação de sistemas que conseguem raciocinar sobre dados estruturados enquanto mantêm a flexibilidade dos LLMs.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15951" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="ReactBench: A Benchmark for Topological Reasoning in MLLMs on Chemical Reaction Diagrams O ReactBench é um benchmark desenvolvido para avaliar a capacidade de modelos de linguagem multimodais (MLLMs) em realizar raciocínio topológico sobre diagramas de reações químicas. O estudo estabelece métricas padronizadas para testar a compreensão de estruturas moleculares e relações químicas em representações visuais, abordando uma lacuna importante na avaliação desses modelos em tarefas científicas complexas. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">ReactBench: A Benchmark for Topological Reasoning in MLLMs on Chemical Reaction Diagrams</div>
+      <div class="article-summary">O ReactBench é um benchmark desenvolvido para avaliar a capacidade de modelos de linguagem multimodais (MLLMs) em realizar raciocínio topológico sobre diagramas de reações químicas. O estudo estabelece métricas padronizadas para testar a compreensão de estruturas moleculares e relações químicas em representações visuais, abordando uma lacuna importante na avaliação desses modelos em tarefas científicas complexas.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15994" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Characterising LLM-Generated Competency Questions: a Cross-Domain Empirical Study using Open and Closed Models O estudo avalia como modelos de linguagem abertos e fechados geram perguntas de competência em diferentes domínios, analisando a qualidade e características dessas questões automaticamente produzidas. Os resultados mostram diferenças significativas entre os modelos e domínios, fornecendo insights sobre a adequação de LLMs para tarefas de geração de questões competenciais em ontologias e bases de conhecimento. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Characterising LLM-Generated Competency Questions: a Cross-Domain Empirical Study using Open and Closed Models</div>
+      <div class="article-summary">O estudo avalia como modelos de linguagem abertos e fechados geram perguntas de competência em diferentes domínios, analisando a qualidade e características dessas questões automaticamente produzidas. Os resultados mostram diferenças significativas entre os modelos e domínios, fornecendo insights sobre a adequação de LLMs para tarefas de geração de questões competenciais em ontologias e bases de conhecimento.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.16258" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Using Large Language Models and Knowledge Graphs to Improve the Interpretability of Machine Learning Models in Manufacturing O artigo propõe usar Modelos de Linguagem Grande (LLMs) e Grafos de Conhecimento para aumentar a interpretabilidade de modelos de aprendizado de máquina aplicados no setor manufatureiro. A abordagem combina a capacidade dos LLMs em processar linguagem natural com estruturas de conhecimento para tornar as decisões dos modelos de IA mais transparentes e compreensíveis para profissionais da indústria. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Using Large Language Models and Knowledge Graphs to Improve the Interpretability of Machine Learning Models in Manufacturing</div>
+      <div class="article-summary">O artigo propõe usar Modelos de Linguagem Grande (LLMs) e Grafos de Conhecimento para aumentar a interpretabilidade de modelos de aprendizado de máquina aplicados no setor manufatureiro. A abordagem combina a capacidade dos LLMs em processar linguagem natural com estruturas de conhecimento para tornar as decisões dos modelos de IA mais transparentes e compreensíveis para profissionais da indústria.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.16280" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Modeling of ASD/TD Children's Behaviors in Interaction with a Virtual Social Robot During a Music Education Program Using Deep Neural Networks O estudo utiliza redes neurais profundas para modelar e analisar comportamentos de crianças com autismo (ASD) e desenvolvimento típico (TD) durante interações com um robô social virtual em um programa de educação musical. A pesquisa busca identificar padrões comportamentais distintos entre os dois grupos através de aprendizado de máquina, potencialmente contribuindo para melhorar intervenções educacionais personalizadas. Os resultados podem auxiliar na detecção e compreensão de características comportamentais associadas ao autismo em contextos educacionais. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Modeling of ASD/TD Children's Behaviors in Interaction with a Virtual Social Robot During a Music Education Program Using Deep Neural Networks</div>
+      <div class="article-summary">O estudo utiliza redes neurais profundas para modelar e analisar comportamentos de crianças com autismo (ASD) e desenvolvimento típico (TD) durante interações com um robô social virtual em um programa de educação musical. A pesquisa busca identificar padrões comportamentais distintos entre os dois grupos através de aprendizado de máquina, potencialmente contribuindo para melhorar intervenções educacionais personalizadas. Os resultados podem auxiliar na detecção e compreensão de características comportamentais associadas ao autismo em contextos educacionais.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15314" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Anthropomorphism and Trust in Human-Large Language Model interactions # Resumo
+
+O estudo examina como a atribuição de características humanas a modelos de linguagem grandes (LLMs) influencia o nível de confiança que as pessoas depositam nessas ferramentas. Os resultados indicam que o antropomorfismo pode levar a uma confiança excessiva ou inadequada, afetando como os usuários interagem e tomam decisões baseadas nas respostas dos LLMs. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Anthropomorphism and Trust in Human-Large Language Model interactions</div>
+      <div class="article-summary"># Resumo
+
+O estudo examina como a atribuição de características humanas a modelos de linguagem grandes (LLMs) influencia o nível de confiança que as pessoas depositam nessas ferramentas. Os resultados indicam que o antropomorfismo pode levar a uma confiança excessiva ou inadequada, afetando como os usuários interagem e tomam decisões baseadas nas respostas dos LLMs.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15316" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Explainable Iterative Data Visualisation Refinement via an LLM Agent O artigo propõe um agente baseado em modelo de linguagem grande (LLM) que refina iterativamente visualizações de dados, tornando o processo explicável e interativo. O sistema permite que usuários aprimorem gráficos e análises de forma contínua, com o agente justificando cada mudança realizada. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Explainable Iterative Data Visualisation Refinement via an LLM Agent</div>
+      <div class="article-summary">O artigo propõe um agente baseado em modelo de linguagem grande (LLM) que refina iterativamente visualizações de dados, tornando o processo explicável e interativo. O sistema permite que usuários aprimorem gráficos e análises de forma contínua, com o agente justificando cada mudança realizada.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15319" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Evaluating LLMs as Human Surrogates in Controlled Experiments O estudo avalia se modelos de linguagem grande (LLMs) podem substituir humanos em experimentos controlados, testando sua capacidade de simular comportamentos e respostas humanas de forma confiável. Os resultados indicam limitações significativas dos LLMs em replicar padrões humanos consistentemente, especialmente em tarefas que exigem julgamento contextual complexo. A pesquisa sugere que LLMs não são substitutos adequados para participantes humanos em pesquisa científica, mantendo a importância de estudos com humanos reais. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Evaluating LLMs as Human Surrogates in Controlled Experiments</div>
+      <div class="article-summary">O estudo avalia se modelos de linguagem grande (LLMs) podem substituir humanos em experimentos controlados, testando sua capacidade de simular comportamentos e respostas humanas de forma confiável. Os resultados indicam limitações significativas dos LLMs em replicar padrões humanos consistentemente, especialmente em tarefas que exigem julgamento contextual complexo. A pesquisa sugere que LLMs não são substitutos adequados para participantes humanos em pesquisa científica, mantendo a importância de estudos com humanos reais.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15329" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="How people use Copilot for Health # Resumo
+
+O estudo analisa como pessoas utilizam o Copilot for Health, uma ferramenta de IA, para auxiliar em questões de saúde e bem-estar. A pesquisa revela padrões de uso, preferências dos usuários e a efetividade da ferramenta em fornecer informações médicas confiáveis e acessíveis. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">How people use Copilot for Health</div>
+      <div class="article-summary"># Resumo
+
+O estudo analisa como pessoas utilizam o Copilot for Health, uma ferramenta de IA, para auxiliar em questões de saúde e bem-estar. A pesquisa revela padrões de uso, preferências dos usuários e a efetividade da ferramenta em fornecer informações médicas confiáveis e acessíveis.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15331" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Facial-Expression-Aware Prompting for Empathetic LLM Tutoring O estudo propõe integrar reconhecimento de expressões faciais em modelos de linguagem grandes (LLMs) para criar tutores mais empáticos e responsivos. O sistema ajusta suas respostas e abordagens de ensino com base nas emoções detectadas no rosto do aluno, melhorando a experiência educacional personalizada. Essa combinação de visão computacional com LLMs visa tornar a tutoria mais emotivamente inteligente e adaptada às necessidades individuais. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Facial-Expression-Aware Prompting for Empathetic LLM Tutoring</div>
+      <div class="article-summary">O estudo propõe integrar reconhecimento de expressões faciais em modelos de linguagem grandes (LLMs) para criar tutores mais empáticos e responsivos. O sistema ajusta suas respostas e abordagens de ensino com base nas emoções detectadas no rosto do aluno, melhorando a experiência educacional personalizada. Essa combinação de visão computacional com LLMs visa tornar a tutoria mais emotivamente inteligente e adaptada às necessidades individuais.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15336" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="MRGEN: A Conceptual Framework for LLM-Powered Mixed Reality Authoring Tools for Education O artigo apresenta o MRGEN, um framework conceitual que utiliza modelos de linguagem grande (LLMs) para criar ferramentas de autoria em Realidade Mista voltadas para educação. O framework visa simplificar o desenvolvimento de conteúdos educacionais imersivos, combinando inteligência artificial com tecnologias de realidade mista. O trabalho explora como LLMs podem potencializar a criação de experiências de aprendizado mais interativas e acessíveis em ambientes de realidade mista. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">MRGEN: A Conceptual Framework for LLM-Powered Mixed Reality Authoring Tools for Education</div>
+      <div class="article-summary">O artigo apresenta o MRGEN, um framework conceitual que utiliza modelos de linguagem grande (LLMs) para criar ferramentas de autoria em Realidade Mista voltadas para educação. O framework visa simplificar o desenvolvimento de conteúdos educacionais imersivos, combinando inteligência artificial com tecnologias de realidade mista. O trabalho explora como LLMs podem potencializar a criação de experiências de aprendizado mais interativas e acessíveis em ambientes de realidade mista.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15341" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="When the Loop Closes: Architectural Limits of In-Context Isolation, Metacognitive Co-option, and the Two-Target Design Problem in Human-LLM Systems O artigo discute limitações arquitetônicas fundamentais em sistemas integrados de humanos e modelos de linguagem, focando em desafios como isolamento contextual, apropriação metacognitiva e problemas de design com múltiplos objetivos. A pesquisa analisa como loops fechados de interação entre humanos e LLMs criam contradições estruturais que não podem ser resolvidas apenas com melhorias técnicas incrementais. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">When the Loop Closes: Architectural Limits of In-Context Isolation, Metacognitive Co-option, and the Two-Target Design Problem in Human-LLM Systems</div>
+      <div class="article-summary">O artigo discute limitações arquitetônicas fundamentais em sistemas integrados de humanos e modelos de linguagem, focando em desafios como isolamento contextual, apropriação metacognitiva e problemas de design com múltiplos objetivos. A pesquisa analisa como loops fechados de interação entre humanos e LLMs criam contradições estruturais que não podem ser resolvidas apenas com melhorias técnicas incrementais.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.15343" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+  </div>
+</div>
+<!-- ABA TECH -->
+<div class="tab-panel" id="panel-tech">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot tech"></span>
+      <span class="slot-label tech">Tecnologia</span>
+      <span class="slot-count">10 notícias</span>
+    </div>
+    
+    <div class="article" data-searchable="Quit Doomscrolling With These 5 Effective Tech Gadgets and Apps O artigo apresenta 5 gadgets e aplicativos tecnológicos que ajudam a reduzir o &quot;doomscrolling&quot; (rolagem compulsiva de notícias negativas). As soluções sugeridas visam diminuir o tempo gasto em redes sociais e melhorar o bem-estar mental através de ferramentas de controle de uso de dispositivos. O conteúdo é uma recomendação prática para quem deseja quebrar o hábito de consumo excessivo de conteúdo negativo online. CNET">
+      <div class="article-meta">
+        <span class="article-time">08:00</span>
+        <span class="article-source">CNET</span>
+      </div>
+      <div class="article-title">Quit Doomscrolling With These 5 Effective Tech Gadgets and Apps</div>
+      <div class="article-summary">O artigo apresenta 5 gadgets e aplicativos tecnológicos que ajudam a reduzir o &quot;doomscrolling&quot; (rolagem compulsiva de notícias negativas). As soluções sugeridas visam diminuir o tempo gasto em redes sociais e melhorar o bem-estar mental através de ferramentas de controle de uso de dispositivos. O conteúdo é uma recomendação prática para quem deseja quebrar o hábito de consumo excessivo de conteúdo negativo online.</div>
+      <a class="article-link" href="https://www.cnet.com/health/best-apps-to-help-manage-screen-time/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Stop Being So Dependent on Your iPhone: Turn It Into a Dumb Phone Instead O artigo sugere transformar o iPhone em um &quot;telefone burro&quot; para reduzir a dependência do dispositivo. A estratégia envolve desativar aplicativos, notificações e funcionalidades desnecessárias, mantendo apenas as ferramentas essenciais de comunicação. Essa abordagem busca diminuir o uso excessivo do smartphone e melhorar o bem-estar digital. CNET">
+      <div class="article-meta">
+        <span class="article-time">07:00</span>
+        <span class="article-source">CNET</span>
+      </div>
+      <div class="article-title">Stop Being So Dependent on Your iPhone: Turn It Into a Dumb Phone Instead</div>
+      <div class="article-summary">O artigo sugere transformar o iPhone em um &quot;telefone burro&quot; para reduzir a dependência do dispositivo. A estratégia envolve desativar aplicativos, notificações e funcionalidades desnecessárias, mantendo apenas as ferramentas essenciais de comunicação. Essa abordagem busca diminuir o uso excessivo do smartphone e melhorar o bem-estar digital.</div>
+      <a class="article-link" href="https://www.cnet.com/tech/mobile/stop-being-so-dependent-on-your-iphone-turn-it-into-a-dumb-phone-instead/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Best Red Light Therapy Devices of 2026, Tested and FDA-Cleared # Resumo
+
+A reportagem da CNET apresenta os melhores dispositivos de terapia de luz vermelha de 2026, todos testados e aprovados pela FDA. Os produtos listados são avaliados quanto à eficácia, qualidade e segurança para uso em tratamentos de pele, recuperação muscular e outros benefícios à saúde. A seleção inclui opções com diferentes características e preços para atender a diversos tipos de consumidores. CNET">
+      <div class="article-meta">
+        <span class="article-time">06:00</span>
+        <span class="article-source">CNET</span>
+      </div>
+      <div class="article-title">Best Red Light Therapy Devices of 2026, Tested and FDA-Cleared</div>
+      <div class="article-summary"># Resumo
+
+A reportagem da CNET apresenta os melhores dispositivos de terapia de luz vermelha de 2026, todos testados e aprovados pela FDA. Os produtos listados são avaliados quanto à eficácia, qualidade e segurança para uso em tratamentos de pele, recuperação muscular e outros benefícios à saúde. A seleção inclui opções com diferentes características e preços para atender a diversos tipos de consumidores.</div>
+      <a class="article-link" href="https://www.cnet.com/health/personal-care/best-red-light-therapy-devices/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Tech CEOs Think AI Will Let Them Be Everywhere at Once CEOs de tecnologia acreditam que a inteligência artificial permitirá que eles estejam presentes em múltiplos lugares simultaneamente, potencialmente através de avatares digitais ou representações virtuais. A tecnologia promete aumentar a eficiência executiva e a presença em reuniões, eventos e operações globais sem necessidade de deslocamento físico. WIRED">
+      <div class="article-meta">
+        <span class="article-time">08:00</span>
+        <span class="article-source">WIRED</span>
+      </div>
+      <div class="article-title">Tech CEOs Think AI Will Let Them Be Everywhere at Once</div>
+      <div class="article-summary">CEOs de tecnologia acreditam que a inteligência artificial permitirá que eles estejam presentes em múltiplos lugares simultaneamente, potencialmente através de avatares digitais ou representações virtuais. A tecnologia promete aumentar a eficiência executiva e a presença em reuniões, eventos e operações globais sem necessidade de deslocamento físico.</div>
+      <a class="article-link" href="https://www.wired.com/story/tech-ceos-using-ai-to-be-everywhere-at-once/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="New military tech can maintain communication in contested electronic warfare environments A tecnologia militar desenvolvida permite manter comunicações em ambientes de guerra eletrônica, onde há interferências e disputas pelo controle do espectro eletromagnético. A inovação é crucial para operações militares em cenários onde o inimigo tenta bloquear ou interferir nas transmissões de dados e voz. Interesting Engineering">
+      <div class="article-meta">
+        <span class="article-time">02:50</span>
+        <span class="article-source">Interesting Engineering</span>
+      </div>
+      <div class="article-title">New military tech can maintain communication in contested electronic warfare environments</div>
+      <div class="article-summary">A tecnologia militar desenvolvida permite manter comunicações em ambientes de guerra eletrônica, onde há interferências e disputas pelo controle do espectro eletromagnético. A inovação é crucial para operações militares em cenários onde o inimigo tenta bloquear ou interferir nas transmissões de dados e voz.</div>
+      <a class="article-link" href="https://interestingengineering.com/military/military-tech-communication-contested-environments-jammers" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Satélite lançado pela Blue Origin será destruído após entrar em órbita errada A Blue Origin lançou um satélite que entrou em uma órbita incorreta e será destruído. O satélite não conseguiu atingir a altitude pretendida, tornando impossível sua recuperação ou reutilização. Olhar Digital">
+      <div class="article-meta">
+        <span class="article-time">07:33</span>
+        <span class="article-source">Olhar Digital</span>
+      </div>
+      <div class="article-title">Satélite lançado pela Blue Origin será destruído após entrar em órbita errada</div>
+      <div class="article-summary">A Blue Origin lançou um satélite que entrou em uma órbita incorreta e será destruído. O satélite não conseguiu atingir a altitude pretendida, tornando impossível sua recuperação ou reutilização.</div>
+      <a class="article-link" href="https://olhardigital.com.br/2026/04/20/ciencia-e-espaco/satelite-lancado-pela-blue-origin-sera-destruido-apos-entrar-em-orbita-errada/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Conheça o robô humanoide que superou o recordista humano numa meia-maratona Um robô humanoide conseguiu superar o recorde humano em uma meia-maratona, demonstrando avanços significativos em tecnologia de mobilidade e resistência. A máquina completou a prova em tempo inferior ao recordista anterior, marcando um marco impressionante na engenharia robótica. O feito evidencia o progresso acelerado na capacidade de robôs humanoides executarem tarefas físicas complexas. Olhar Digital">
+      <div class="article-meta">
+        <span class="article-time">07:26</span>
+        <span class="article-source">Olhar Digital</span>
+      </div>
+      <div class="article-title">Conheça o robô humanoide que superou o recordista humano numa meia-maratona</div>
+      <div class="article-summary">Um robô humanoide conseguiu superar o recorde humano em uma meia-maratona, demonstrando avanços significativos em tecnologia de mobilidade e resistência. A máquina completou a prova em tempo inferior ao recordista anterior, marcando um marco impressionante na engenharia robótica. O feito evidencia o progresso acelerado na capacidade de robôs humanoides executarem tarefas físicas complexas.</div>
+      <a class="article-link" href="https://olhardigital.com.br/2026/04/20/robotica/conheca-o-robo-humanoide-que-superou-o-recordista-humano-numa-meia-maratona/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Novo celular dobrável tem formato largo inédito para produtividade; veja Um novo celular dobrável apresenta um formato largo inovador, diferente dos modelos convencionais, projetado para aumentar a produtividade do usuário. O design inédito oferece uma tela mais ampla quando desdobrado, facilitando multitarefas e trabalho em movimento. Canaltech">
+      <div class="article-meta">
+        <span class="article-time">07:51</span>
+        <span class="article-source">Canaltech</span>
+      </div>
+      <div class="article-title">Novo celular dobrável tem formato largo inédito para produtividade; veja</div>
+      <div class="article-summary">Um novo celular dobrável apresenta um formato largo inovador, diferente dos modelos convencionais, projetado para aumentar a produtividade do usuário. O design inédito oferece uma tela mais ampla quando desdobrado, facilitando multitarefas e trabalho em movimento.</div>
+      <a class="article-link" href="https://canaltech.com.br/smartphone/novo-celular-dobravel-tem-formato-largo-inedito-para-produtividade-veja/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="iCloud na operação da PF: perito explica o que seu celular guarda na nuvem # Resumo
+
+O iCloud armazena automaticamente dados pessoais como fotos, mensagens, contatos e localização do usuário na nuvem, podendo ser acessado por autoridades com mandado judicial. Um perito explica que essas informações podem ser cruciais em investigações policiais, já que o backup na nuvem preserva dados mesmo após exclusão do dispositivo. Canaltech">
+      <div class="article-meta">
+        <span class="article-time">07:00</span>
+        <span class="article-source">Canaltech</span>
+      </div>
+      <div class="article-title">iCloud na operação da PF: perito explica o que seu celular guarda na nuvem</div>
+      <div class="article-summary"># Resumo
+
+O iCloud armazena automaticamente dados pessoais como fotos, mensagens, contatos e localização do usuário na nuvem, podendo ser acessado por autoridades com mandado judicial. Um perito explica que essas informações podem ser cruciais em investigações policiais, já que o backup na nuvem preserva dados mesmo após exclusão do dispositivo.</div>
+      <a class="article-link" href="https://canaltech.com.br/seguranca/icloud-na-operacao-da-pf-perito-explica-o-que-seu-celular-guarda-na-nuvem/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Seu iCloud pode te entregar? O que a nuvem sabe sobre você # O iCloud pode te entregar? O que a nuvem sabe sobre você
+
+A nuvem do iCloud armazena dados sensíveis dos usuários, como fotos, mensagens e informações pessoais, que podem ser acessados pela Apple ou por autoridades legais mediante solicitação. Embora a empresa implemente criptografia, nem todos os dados são protegidos da mesma forma, deixando informações vulneráveis a exposição. O artigo alerta sobre a importância de entender quais dados são armazenados na nuvem e os riscos de privacidade envolvidos. Canaltech">
+      <div class="article-meta">
+        <span class="article-time">06:00</span>
+        <span class="article-source">Canaltech</span>
+      </div>
+      <div class="article-title">Seu iCloud pode te entregar? O que a nuvem sabe sobre você</div>
+      <div class="article-summary"># O iCloud pode te entregar? O que a nuvem sabe sobre você
+
+A nuvem do iCloud armazena dados sensíveis dos usuários, como fotos, mensagens e informações pessoais, que podem ser acessados pela Apple ou por autoridades legais mediante solicitação. Embora a empresa implemente criptografia, nem todos os dados são protegidos da mesma forma, deixando informações vulneráveis a exposição. O artigo alerta sobre a importância de entender quais dados são armazenados na nuvem e os riscos de privacidade envolvidos.</div>
+      <a class="article-link" href="https://canaltech.com.br/podcast/podcast-canaltech/seu-icloud-pode-te-entregar-o-que-a-nuvem-sabe-sobre-voce-6467/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+  </div>
+</div>
+<div class="search-empty" id="searchEmpty">Nenhuma notícia encontrada</div>
+<div class="footer">Notícias &nbsp;·&nbsp; Professora Crypto</div>
+<div class="fab-group">
+  <button class="fab" onclick="window.scrollBy({top: window.innerHeight * 0.85, behavior:'smooth'})" title="↓">↓</button>
+</div>
+<script>
+  let currentTab = 'ia';
+  (function() {
+    function todayBRT() {
+      const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      return d.getUTCFullYear() + '-' +
+        String(d.getUTCMonth() + 1).padStart(2,'0') + '-' +
+        String(d.getUTCDate()).padStart(2,'0');
+    }
+    const today = todayBRT();
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const current = parts[parts.length - 1] || '';
+    const btn = document.getElementById('btnHoje');
+    if (btn && current !== today) { btn.href = '/' + today + '/'; btn.style.display = 'inline-flex'; }
+  })();
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('panel-ia').classList.toggle('active', tab === 'ia');
+    document.getElementById('panel-tech').classList.toggle('active', tab === 'tech');
+    document.getElementById('tab-ia').className = 'tab-btn' + (tab === 'ia' ? ' active-ia' : '');
+    document.getElementById('tab-tech').className = 'tab-btn' + (tab === 'tech' ? ' active-tech' : '');
+    const input = document.getElementById('searchInput');
+    if (input.value) { input.value = ''; filterNews(''); }
+  }
+  function toggleSearch() {
+    const bar = document.getElementById('searchBar');
+    const open = bar.classList.toggle('open');
+    if (open) document.getElementById('searchInput').focus();
+    else { filterNews(''); document.getElementById('searchInput').value = ''; }
+  }
+  function filterNews(q) {
+    const term = q.toLowerCase().trim();
+    const panel = document.getElementById('panel-' + currentTab);
+    const items = panel.querySelectorAll('.article');
+    let any = false;
+    items.forEach(item => {
+      const match = !term || (item.dataset.searchable || '').toLowerCase().includes(term);
+      item.classList.toggle('hidden', !match);
+      if (match) any = true;
+    });
+    document.getElementById('searchEmpty').style.display = (term && !any) ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>
