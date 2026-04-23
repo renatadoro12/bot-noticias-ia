@@ -2,7 +2,10 @@
 import json
 import os
 import anthropic
+from datetime import timezone, timedelta
 from utils.logger import get_logger
+
+BRT = timezone(timedelta(hours=-3))
 
 log = get_logger()
 
@@ -48,7 +51,7 @@ def summarize(articles: list[dict], api_key: str, run_date_str: str) -> list[dic
     articles_text = ""
     for i, a in enumerate(articles, 1):
         pub = a["published_utc"]
-        time_str = pub.strftime("%H:%M") if pub else "--:--"
+        time_str = pub.astimezone(BRT).strftime("%H:%M") if pub else "--:--"
         articles_text += f"\n[{i}]\n"
         articles_text += f"URL: {a['url']}\n"
         articles_text += f"TÍTULO: {a['title']}\n"
