@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notícias — Professora Crypto</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080810; color: #ddd; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; }
+  .hero { padding: 52px 24px 36px; text-align: center; border-bottom: 1px solid #111; }
+  .hero-label { font-size: 11px; letter-spacing: 6px; color: #333; text-transform: uppercase; margin-bottom: 16px; }
+  .hero-title { font-size: 48px; font-weight: 900; background: linear-gradient(135deg, #7c3aed, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -2px; line-height: 1; }
+  .hero-sub { font-size: 13px; color: #2a2a2a; margin-top: 10px; letter-spacing: 1px; }
+  .hero-date { font-size: 12px; color: #333; margin-top: 18px; letter-spacing: 4px; text-transform: uppercase; }
+  .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; }
+  .page-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-decoration: none; border: 1px solid #1a1a1a; color: #444; transition: .2s; text-transform: uppercase; }
+  .page-btn:hover { border-color: #444; color: #aaa; }
+  .page-btn.disabled { opacity: 0.2; pointer-events: none; }
+  .page-current { font-size: 12px; color: #2a2a2a; letter-spacing: 2px; }
+  /* TABS */
+  .tabs-nav { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 14px 24px; border-bottom: 1px solid #0f0f0f; background: #080810; position: sticky; top: 0; z-index: 100; }
+  .tab-btn { padding: 6px 20px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid #1a1a1a; background: transparent; color: #444; cursor: pointer; transition: .15s; }
+  .tab-btn:hover { border-color: #444; color: #aaa; }
+  .tab-btn.active-ia { background: #1a0a3a; border-color: #5b21b6; color: #a78bfa; }
+  .tab-btn.active-tech { background: #0a1f3a; border-color: #1d4ed8; color: #60a5fa; }
+  .tab-search { margin-left: auto; padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border: 1px solid #1a1a1a; background: transparent; color: #444; cursor: pointer; transition: .15s; }
+  .tab-search:hover { border-color: #444; color: #aaa; }
+  /* SEARCH */
+  .search-bar { display: none; padding: 12px 24px; background: #0d0d0d; border-bottom: 1px solid #111; }
+  .search-bar.open { display: block; }
+  .search-input { width: 100%; max-width: 600px; display: block; margin: 0 auto; background: #111; border: 1px solid #1e1e1e; color: #ddd; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+  .search-input:focus { border-color: #444; }
+  .search-input::placeholder { color: #333; }
+  /* PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .slot-section { max-width: 760px; margin: 0 auto; padding: 48px 24px; border-bottom: 1px solid #0d0d0d; }
+  .slot-header { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; padding-bottom: 18px; border-bottom: 1px solid #111; }
+  .slot-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .slot-dot.ia { background: #7c3aed; }
+  .slot-dot.tech { background: #2563eb; }
+  .slot-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  .slot-label.ia { color: #a78bfa; }
+  .slot-label.tech { color: #60a5fa; }
+  .slot-count { font-size: 11px; color: #222; margin-left: auto; letter-spacing: 1px; }
+  /* ARTICLES */
+  .article { padding: 28px 0; border-bottom: 1px solid #0f0f0f; }
+  .article:last-child { border-bottom: none; padding-bottom: 0; }
+  .article.hidden { display: none; }
+  .article-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .article-time { font-size: 11px; color: #444; font-weight: 700; background: #111; padding: 3px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+  .article-source { font-size: 11px; color: #2e2e2e; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .article-title { font-size: 20px; font-weight: 700; color: #eee; line-height: 1.4; margin-bottom: 14px; }
+  .article-summary { font-size: 14px; color: #555; line-height: 1.9; margin-bottom: 14px; }
+  .article-link { font-size: 11px; color: #2a2a6a; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; text-decoration: none; transition: color .15s; }
+  .article-link:hover { color: #5555cc; }
+  .empty-slot { color: #222; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; text-align: center; padding: 20px 0; }
+  .search-empty { display: none; text-align: center; padding: 60px 24px; color: #333; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+  .footer { text-align: center; padding: 56px 24px; color: #1a1a1a; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; border-top: 1px solid #0d0d0d; }
+  .fab-group { position: fixed; bottom: 28px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 200; }
+  .fab { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #1a1a1a; background: #0f0f0f; color: #444; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: .2s; }
+  .fab:hover { border-color: #444; color: #ccc; }
+  @media (max-width: 600px) { .hero-title { font-size: 34px; } .slot-section { padding: 32px 16px; } .article-title { font-size: 17px; } .tabs-nav { gap: 4px; padding: 12px 16px; } .tab-btn { padding: 6px 12px; font-size: 10px; } }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-label">Inteligência Artificial &amp; Tecnologia</div>
+  <div class="hero-title">NOTÍCIAS</div>
+  <div class="hero-sub">Professora Crypto</div>
+  <div class="hero-date">24 DE ABRIL DE 2026</div>
+</div>
+<div class="pagination">
+  <a class="page-btn" href="../2026-04-23/">← Anterior</a>
+  <span class="page-current">24 abr 2026</span>
+  <span class="page-btn disabled">Próximo →</span>
+  <a id="btnHoje" class="page-btn" style="display:none;" href="#">Hoje</a>
+</div>
+<div class="tabs-nav">
+  <button class="tab-btn active-ia" id="tab-ia" onclick="switchTab('ia')">🤖 Inteligência Artificial</button>
+  <button class="tab-btn" id="tab-tech" onclick="switchTab('tech')">💡 Tecnologia</button>
+  <button class="tab-search" onclick="toggleSearch()">🔍</button>
+</div>
+<div class="search-bar" id="searchBar">
+  <input class="search-input" id="searchInput" type="text" placeholder="Buscar notícias..." oninput="filterNews(this.value)">
+</div>
+<!-- ABA IA -->
+<div class="tab-panel active" id="panel-ia">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot ia"></span>
+      <span class="slot-label ia">Inteligência Artificial</span>
+      <span class="slot-count">15 notícias</span>
+    </div>
+    
+    <div class="article" data-searchable="China’s DeepSeek previews new AI model a year after jolting US rivals A startup chinesa DeepSeek anunciou um novo modelo de IA um ano após surpreender concorrentes americanos com avanços tecnológicos significativos. O lançamento marca a continuidade da empresa em competir globalmente no mercado de inteligência artificial. A DeepSeek busca consolidar sua posição como um dos principais desenvolvedores de modelos de IA no mundo. AI | The Verge">
+      <div class="article-meta">
+        <span class="article-time">06:45</span>
+        <span class="article-source">AI | The Verge</span>
+      </div>
+      <div class="article-title">China’s DeepSeek previews new AI model a year after jolting US rivals</div>
+      <div class="article-summary">A startup chinesa DeepSeek anunciou um novo modelo de IA um ano após surpreender concorrentes americanos com avanços tecnológicos significativos. O lançamento marca a continuidade da empresa em competir globalmente no mercado de inteligência artificial. A DeepSeek busca consolidar sua posição como um dos principais desenvolvedores de modelos de IA no mundo.</div>
+      <a class="article-link" href="https://www.theverge.com/ai-artificial-intelligence/918035/deepseek-preview-v4-ai-model" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="The Tool-Overuse Illusion: Why Does LLM Prefer External Tools over Internal Knowledge? O estudo investigar por que modelos de linguagem grande (LLMs) tendem a preferir usar ferramentas externas em vez de aproveitar o conhecimento interno que já possuem. A pesquisa revela que essa preferência pode ser uma ilusão causada por vieses no treinamento e nas preferências humanas, não necessariamente uma limitação real dos modelos. Os achados sugerem que otimizar melhor o uso de conhecimento interno poderia melhorar a eficiência e a confiabilidade dos LLMs. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">The Tool-Overuse Illusion: Why Does LLM Prefer External Tools over Internal Knowledge?</div>
+      <div class="article-summary">O estudo investigar por que modelos de linguagem grande (LLMs) tendem a preferir usar ferramentas externas em vez de aproveitar o conhecimento interno que já possuem. A pesquisa revela que essa preferência pode ser uma ilusão causada por vieses no treinamento e nas preferências humanas, não necessariamente uma limitação real dos modelos. Os achados sugerem que otimizar melhor o uso de conhecimento interno poderia melhorar a eficiência e a confiabilidade dos LLMs.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19749" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Exploring Data Augmentation and Resampling Strategies for Transformer-Based Models to Address Class Imbalance in AI Scoring of Scientific Explanations in NGSS Classroom O estudo investiga técnicas de aumento de dados e reamostragem para melhorar modelos baseados em Transformers na avaliação automática de explicações científicas em contextos educacionais NGSS, focando em resolver o problema de desbalanceamento de classes. As estratégias testadas buscam aumentar a capacidade dos modelos de IA em classificar corretamente respostas com distribuição desigual de exemplos entre categorias. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Exploring Data Augmentation and Resampling Strategies for Transformer-Based Models to Address Class Imbalance in AI Scoring of Scientific Explanations in NGSS Classroom</div>
+      <div class="article-summary">O estudo investiga técnicas de aumento de dados e reamostragem para melhorar modelos baseados em Transformers na avaliação automática de explicações científicas em contextos educacionais NGSS, focando em resolver o problema de desbalanceamento de classes. As estratégias testadas buscam aumentar a capacidade dos modelos de IA em classificar corretamente respostas com distribuição desigual de exemplos entre categorias.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19754" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Explainable AML Triage with LLMs: Evidence Retrieval and Counterfactual Checks O estudo apresenta um método de triagem de casos de Anti-Lavagem de Dinheiro (AML) utilizando Modelos de Linguagem Grande (LLMs) que fornece explicações sobre as decisões tomadas. O sistema recupera evidências relevantes e realiza verificações contrafactuais para validar as conclusões, aumentando a transparência e confiabilidade das análises de risco financeiro. A abordagem combina capacidades de IA com requisitos regulatórios de explicabilidade, essenciais para conformidade no setor financeiro. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Explainable AML Triage with LLMs: Evidence Retrieval and Counterfactual Checks</div>
+      <div class="article-summary">O estudo apresenta um método de triagem de casos de Anti-Lavagem de Dinheiro (AML) utilizando Modelos de Linguagem Grande (LLMs) que fornece explicações sobre as decisões tomadas. O sistema recupera evidências relevantes e realiza verificações contrafactuais para validar as conclusões, aumentando a transparência e confiabilidade das análises de risco financeiro. A abordagem combina capacidades de IA com requisitos regulatórios de explicabilidade, essenciais para conformidade no setor financeiro.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19755" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="ThermoQA: A Three-Tier Benchmark for Evaluating Thermodynamic Reasoning in Large Language Models O artigo apresenta ThermoQA, um benchmark de três níveis para avaliar a capacidade de raciocínio termodinâmico em modelos de linguagem grandes. O benchmark testa a compreensão de conceitos fundamentais de termodinâmica, aplicações práticas e problemas complexos, permitindo identificar limitações dos LLMs nessa área específica. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">ThermoQA: A Three-Tier Benchmark for Evaluating Thermodynamic Reasoning in Large Language Models</div>
+      <div class="article-summary">O artigo apresenta ThermoQA, um benchmark de três níveis para avaliar a capacidade de raciocínio termodinâmico em modelos de linguagem grandes. O benchmark testa a compreensão de conceitos fundamentais de termodinâmica, aplicações práticas e problemas complexos, permitindo identificar limitações dos LLMs nessa área específica.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19758" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="From Actions to Understanding: Conformal Interpretability of Temporal Concepts in LLM Agents # Resumo
+
+O estudo apresenta um método de interpretabilidade conforme para explicar como agentes baseados em modelos de linguagem grandes (LLMs) compreendem e utilizam conceitos temporais durante a execução de ações. A pesquisa visa tornar o raciocínio temporal desses agentes mais transparente e compreensível, contribuindo para a interpretabilidade de sistemas de IA mais complexos. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">From Actions to Understanding: Conformal Interpretability of Temporal Concepts in LLM Agents</div>
+      <div class="article-summary"># Resumo
+
+O estudo apresenta um método de interpretabilidade conforme para explicar como agentes baseados em modelos de linguagem grandes (LLMs) compreendem e utilizam conceitos temporais durante a execução de ações. A pesquisa visa tornar o raciocínio temporal desses agentes mais transparente e compreensível, contribuindo para a interpretabilidade de sistemas de IA mais complexos.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19775" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Using Learning Theories to Evolve Human-Centered XAI: Future Perspectives and Challenges O artigo propõe integrar teorias de aprendizagem humana ao desenvolvimento de sistemas de IA explicável (XAI) centrados no usuário, buscando melhorar a compreensão e aceitação das decisões de IA. O trabalho aborda desafios futuros para criar explicações mais eficazes que se adaptem aos diferentes estilos e capacidades de aprendizagem dos usuários. A pesquisa enfatiza a importância de considerar fatores cognitivos e pedagógicos no design de interfaces de XAI. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Using Learning Theories to Evolve Human-Centered XAI: Future Perspectives and Challenges</div>
+      <div class="article-summary">O artigo propõe integrar teorias de aprendizagem humana ao desenvolvimento de sistemas de IA explicável (XAI) centrados no usuário, buscando melhorar a compreensão e aceitação das decisões de IA. O trabalho aborda desafios futuros para criar explicações mais eficazes que se adaptem aos diferentes estilos e capacidades de aprendizagem dos usuários. A pesquisa enfatiza a importância de considerar fatores cognitivos e pedagógicos no design de interfaces de XAI.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19788" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="From Data to Theory: Autonomous Large Language Model Agents for Materials Science O artigo apresenta agentes autônomos baseados em modelos de linguagem grandes (LLMs) capazes de transformar dados experimentais em teorias científicas na área de ciência dos materiais. Esses agentes integram coleta de dados, análise e geração de modelos teóricos de forma automatizada. A abordagem demonstra potencial para acelerar descobertas científicas reduzindo a dependência de intervenção humana. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">From Data to Theory: Autonomous Large Language Model Agents for Materials Science</div>
+      <div class="article-summary">O artigo apresenta agentes autônomos baseados em modelos de linguagem grandes (LLMs) capazes de transformar dados experimentais em teorias científicas na área de ciência dos materiais. Esses agentes integram coleta de dados, análise e geração de modelos teóricos de forma automatizada. A abordagem demonstra potencial para acelerar descobertas científicas reduzindo a dependência de intervenção humana.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19789" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Hidden Reliability Risks in Large Language Models: Systematic Identification of Precision-Induced Output Disagreements O estudo identifica riscos de confiabilidade em modelos de linguagem grandes (LLMs) relacionados a desacordos nos resultados quando há variações na precisão numérica. Os pesquisadores descobrem que pequenas mudanças nas configurações de precisão podem causar saídas significativamente diferentes, comprometendo a confiabilidade desses modelos em aplicações críticas. O trabalho propõe uma análise sistemática para detectar essas vulnerabilidades ocultas. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Hidden Reliability Risks in Large Language Models: Systematic Identification of Precision-Induced Output Disagreements</div>
+      <div class="article-summary">O estudo identifica riscos de confiabilidade em modelos de linguagem grandes (LLMs) relacionados a desacordos nos resultados quando há variações na precisão numérica. Os pesquisadores descobrem que pequenas mudanças nas configurações de precisão podem causar saídas significativamente diferentes, comprometendo a confiabilidade desses modelos em aplicações críticas. O trabalho propõe uma análise sistemática para detectar essas vulnerabilidades ocultas.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19790" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="SkillGraph: Graph Foundation Priors for LLM Agent Tool Sequence Recommendation O SkillGraph propõe um método que utiliza grafos como conhecimento prévio para melhorar a recomendação de sequências de ferramentas em agentes baseados em LLMs. A abordagem captura relações entre habilidades e tarefas, permitindo que o modelo recomende sequências de ferramentas mais eficientes e apropriadas. Esse trabalho busca otimizar como agentes de IA escolhem e executam múltiplas ferramentas para resolver problemas complexos. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">SkillGraph: Graph Foundation Priors for LLM Agent Tool Sequence Recommendation</div>
+      <div class="article-summary">O SkillGraph propõe um método que utiliza grafos como conhecimento prévio para melhorar a recomendação de sequências de ferramentas em agentes baseados em LLMs. A abordagem captura relações entre habilidades e tarefas, permitindo que o modelo recomende sequências de ferramentas mais eficientes e apropriadas. Esse trabalho busca otimizar como agentes de IA escolhem e executam múltiplas ferramentas para resolver problemas complexos.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19793" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="MIRROR: A Hierarchical Benchmark for Metacognitive Calibration in Large Language Models O MIRROR é um benchmark hierárquico que avalia a capacidade de modelos de linguagem grandes em calibrar sua metacognição, ou seja, em reconhecer corretamente quando sabem ou não algo. O estudo mede como esses modelos conseguem alinhar sua confiança com a precisão real de suas respostas em diferentes níveis de dificuldade. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">MIRROR: A Hierarchical Benchmark for Metacognitive Calibration in Large Language Models</div>
+      <div class="article-summary">O MIRROR é um benchmark hierárquico que avalia a capacidade de modelos de linguagem grandes em calibrar sua metacognição, ou seja, em reconhecer corretamente quando sabem ou não algo. O estudo mede como esses modelos conseguem alinhar sua confiança com a precisão real de suas respostas em diferentes níveis de dificuldade.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19809" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Large Language Models Meet Biomedical Knowledge Graphs for Mechanistically Grounded Therapeutic Prioritization O estudo integra Modelos de Linguagem Grande (LLMs) com Grafos de Conhecimento Biomédico para priorizar terapias com base em mecanismos biológicos estabelecidos. A abordagem combina a capacidade de processamento de texto dos LLMs com a estrutura e precisão dos grafos de conhecimento, melhorando a identificação e priorização de tratamentos farmacêuticos. O método demonstra como essa integração pode fundamentar as recomendações terapêuticas em evidências mecanísticas sólidas. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Large Language Models Meet Biomedical Knowledge Graphs for Mechanistically Grounded Therapeutic Prioritization</div>
+      <div class="article-summary">O estudo integra Modelos de Linguagem Grande (LLMs) com Grafos de Conhecimento Biomédico para priorizar terapias com base em mecanismos biológicos estabelecidos. A abordagem combina a capacidade de processamento de texto dos LLMs com a estrutura e precisão dos grafos de conhecimento, melhorando a identificação e priorização de tratamentos farmacêuticos. O método demonstra como essa integração pode fundamentar as recomendações terapêuticas em evidências mecanísticas sólidas.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19815" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Emergence Transformer: Dynamical Temporal Attention Matters O artigo apresenta o Emergence Transformer, um modelo que incorpora atenção temporal dinâmica para melhorar o desempenho em tarefas sequenciais. A abordagem permite que o mecanismo de atenção se adapte dinamicamente ao longo do tempo, capturando dependências complexas em dados temporais de forma mais eficaz que transformers convencionais. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Emergence Transformer: Dynamical Temporal Attention Matters</div>
+      <div class="article-summary">O artigo apresenta o Emergence Transformer, um modelo que incorpora atenção temporal dinâmica para melhorar o desempenho em tarefas sequenciais. A abordagem permite que o mecanismo de atenção se adapte dinamicamente ao longo do tempo, capturando dependências complexas em dados temporais de forma mais eficaz que transformers convencionais.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.19816" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Separable Pathways for Causal Reasoning: How Architectural Scaffolding Enables Hypothesis-Space Restructuring in LLM Agents O artigo apresenta um método arquitetural para melhorar o raciocínio causal em agentes baseados em modelos de linguagem, permitindo que eles reestruturem seu espaço de hipóteses de forma mais eficaz. A abordagem utiliza scaffolding arquitetural para separar caminhos de raciocínio, possibilitando que o modelo considere múltiplas explicações causais simultaneamente. Essa estrutura melhora a capacidade dos LLMs em formular e testar hipóteses complexas durante tarefas de raciocínio causal. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">Separable Pathways for Causal Reasoning: How Architectural Scaffolding Enables Hypothesis-Space Restructuring in LLM Agents</div>
+      <div class="article-summary">O artigo apresenta um método arquitetural para melhorar o raciocínio causal em agentes baseados em modelos de linguagem, permitindo que eles reestruturem seu espaço de hipóteses de forma mais eficaz. A abordagem utiliza scaffolding arquitetural para separar caminhos de raciocínio, possibilitando que o modelo considere múltiplas explicações causais simultaneamente. Essa estrutura melhora a capacidade dos LLMs em formular e testar hipóteses complexas durante tarefas de raciocínio causal.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.20039" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="HiPO: Hierarchical Preference Optimization for Adaptive Reasoning in LLMs O HiPO é um método que otimiza modelos de linguagem grandes através de preferências hierárquicas, permitindo que o modelo adapte seu raciocínio de forma mais flexível e eficiente. A abordagem estrutura as preferências em diferentes níveis, melhorando a capacidade do modelo de resolver problemas complexos com melhor desempenho. cs.AI updates on arXiv.org">
+      <div class="article-meta">
+        <span class="article-time">01:00</span>
+        <span class="article-source">cs.AI updates on arXiv.org</span>
+      </div>
+      <div class="article-title">HiPO: Hierarchical Preference Optimization for Adaptive Reasoning in LLMs</div>
+      <div class="article-summary">O HiPO é um método que otimiza modelos de linguagem grandes através de preferências hierárquicas, permitindo que o modelo adapte seu raciocínio de forma mais flexível e eficiente. A abordagem estrutura as preferências em diferentes níveis, melhorando a capacidade do modelo de resolver problemas complexos com melhor desempenho.</div>
+      <a class="article-link" href="https://arxiv.org/abs/2604.20140" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+  </div>
+</div>
+<!-- ABA TECH -->
+<div class="tab-panel" id="panel-tech">
+  <div class="slot-section">
+    <div class="slot-header">
+      <span class="slot-dot tech"></span>
+      <span class="slot-label tech">Tecnologia</span>
+      <span class="slot-count">10 notícias</span>
+    </div>
+    
+    <div class="article" data-searchable="Porsche is adding an all-electric Cayenne coupe to its lineup A Porsche está desenvolvendo uma versão SUV coupe totalmente elétrica do Cayenne para sua linha de produtos. O novo modelo combinará o design esportivo e aerodinâmico de um coupe com a praticidade e o desempenho de um veículo elétrico. A empresa busca expandir sua oferta de modelos eletrificados para competir no crescente mercado de SUVs premium com propulsão elétrica. TechCrunch">
+      <div class="article-meta">
+        <span class="article-time">01:01</span>
+        <span class="article-source">TechCrunch</span>
+      </div>
+      <div class="article-title">Porsche is adding an all-electric Cayenne coupe to its lineup</div>
+      <div class="article-summary">A Porsche está desenvolvendo uma versão SUV coupe totalmente elétrica do Cayenne para sua linha de produtos. O novo modelo combinará o design esportivo e aerodinâmico de um coupe com a praticidade e o desempenho de um veículo elétrico. A empresa busca expandir sua oferta de modelos eletrificados para competir no crescente mercado de SUVs premium com propulsão elétrica.</div>
+      <a class="article-link" href="https://techcrunch.com/2026/04/23/porsche-is-adding-an-all-electric-cayenne-coupe-to-its-lineup/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Porsche's new Cayenne Turbo Coupé Electric can do 0-60 mph in 2.5 seconds O novo Porsche Cayenne Turbo Coupé Electric acelera de 0 a 100 km/h em 2,5 segundos, oferecendo desempenho excepcional em um SUV elétrico coupé. O veículo representa a evolução da linha Cayenne da Porsche com tecnologia elétrica de alta performance. Engadget is a web magazine with obsessive daily coverage of everything new in gadgets and consumer electronics">
+      <div class="article-meta">
+        <span class="article-time">06:19</span>
+        <span class="article-source">Engadget is a web magazine with obsessive daily coverage of everything new in gadgets and consumer electronics</span>
+      </div>
+      <div class="article-title">Porsche's new Cayenne Turbo Coupé Electric can do 0-60 mph in 2.5 seconds</div>
+      <div class="article-summary">O novo Porsche Cayenne Turbo Coupé Electric acelera de 0 a 100 km/h em 2,5 segundos, oferecendo desempenho excepcional em um SUV elétrico coupé. O veículo representa a evolução da linha Cayenne da Porsche com tecnologia elétrica de alta performance.</div>
+      <a class="article-link" href="https://www.engadget.com/transportation/evs/porsches-new-cayenne-turbo-coupe-electric-can-do-0-60-mph-in-25-seconds-091925467.html?src=rss" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="4 Tech Products I Rely on to Help My Toddler Sleep O artigo apresenta 4 produtos tecnológicos que auxiliam no sono de crianças pequenas, como monitores de bebê, máquinas de ruído branco e dispositivos de iluminação inteligente. Esses produtos ajudam a criar um ambiente ideal para dormir, monitorar a criança à distância e manter rotinas consistentes de sono. A tecnologia funciona como ferramenta complementar para facilitar o repouso infantil e dar mais tranquilidade aos pais. CNET">
+      <div class="article-meta">
+        <span class="article-time">08:00</span>
+        <span class="article-source">CNET</span>
+      </div>
+      <div class="article-title">4 Tech Products I Rely on to Help My Toddler Sleep</div>
+      <div class="article-summary">O artigo apresenta 4 produtos tecnológicos que auxiliam no sono de crianças pequenas, como monitores de bebê, máquinas de ruído branco e dispositivos de iluminação inteligente. Esses produtos ajudam a criar um ambiente ideal para dormir, monitorar a criança à distância e manter rotinas consistentes de sono. A tecnologia funciona como ferramenta complementar para facilitar o repouso infantil e dar mais tranquilidade aos pais.</div>
+      <a class="article-link" href="https://www.cnet.com/health/parenting/4-tech-products-toddler-sleep/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="All the New Features the Massive iOS 26.4 Update Brings to Your iPhone # iOS 26.4: Principais Novidades
+
+A atualização massiva do iOS 26.4 traz diversos recursos novos para iPhones, incluindo melhorias de desempenho, novas funcionalidades de câmera e aprimoramentos na inteligência artificial. O update também oferece correções de segurança significativas e opções expandidas de personalização para a experiência do usuário. CNET">
+      <div class="article-meta">
+        <span class="article-time">07:00</span>
+        <span class="article-source">CNET</span>
+      </div>
+      <div class="article-title">All the New Features the Massive iOS 26.4 Update Brings to Your iPhone</div>
+      <div class="article-summary"># iOS 26.4: Principais Novidades
+
+A atualização massiva do iOS 26.4 traz diversos recursos novos para iPhones, incluindo melhorias de desempenho, novas funcionalidades de câmera e aprimoramentos na inteligência artificial. O update também oferece correções de segurança significativas e opções expandidas de personalização para a experiência do usuário.</div>
+      <a class="article-link" href="https://www.cnet.com/tech/services-and-software/apple-ios-26-4-update-iphone-new-features/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="VMax New V4 Electric Scooter Review: Unleash the Beast O VMax New V4 é uma scooter elétrica de alto desempenho que oferece potência impressionante e recursos avançados para usuários que buscam velocidade e eficiência. O modelo combina tecnologia de ponta com design robusto, sendo ideal para deslocamentos urbanos rápidos e exigentes. A review destaca sua capacidade de entrega potente e inovações que diferenciam a V4 no mercado competitivo de scooters elétricas. WIRED">
+      <div class="article-meta">
+        <span class="article-time">08:00</span>
+        <span class="article-source">WIRED</span>
+      </div>
+      <div class="article-title">VMax New V4 Electric Scooter Review: Unleash the Beast</div>
+      <div class="article-summary">O VMax New V4 é uma scooter elétrica de alto desempenho que oferece potência impressionante e recursos avançados para usuários que buscam velocidade e eficiência. O modelo combina tecnologia de ponta com design robusto, sendo ideal para deslocamentos urbanos rápidos e exigentes. A review destaca sua capacidade de entrega potente e inovações que diferenciam a V4 no mercado competitivo de scooters elétricas.</div>
+      <a class="article-link" href="https://www.wired.com/review/vmax-new-vx4-electric-scooter/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="US Navy’s ‘hellscape’ drone plan could complicate China’s Taiwan playbook, experts say A Marinha dos EUA planeja usar drones em enxame para criar um &quot;cenário infernal&quot; que complicaria uma invasão chinesa de Taiwan, tornando as operações militares mais caras e arriscadas para os invasores. Especialistas argumentam que essa estratégia de múltiplos drones poderia forçar a China a repensar sua abordagem tática e aumentar significativamente os custos de uma possível operação militar na região. Interesting Engineering">
+      <div class="article-meta">
+        <span class="article-time">06:48</span>
+        <span class="article-source">Interesting Engineering</span>
+      </div>
+      <div class="article-title">US Navy’s ‘hellscape’ drone plan could complicate China’s Taiwan playbook, experts say</div>
+      <div class="article-summary">A Marinha dos EUA planeja usar drones em enxame para criar um &quot;cenário infernal&quot; que complicaria uma invasão chinesa de Taiwan, tornando as operações militares mais caras e arriscadas para os invasores. Especialistas argumentam que essa estratégia de múltiplos drones poderia forçar a China a repensar sua abordagem tática e aumentar significativamente os custos de uma possível operação militar na região.</div>
+      <a class="article-link" href="https://interestingengineering.com/military/us-navy-hellscape-taiwan-china" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="US’ 10 nuclear, rocket scientists died or disappeared in mysterious circumstances: Report Um relatório documenta o desaparecimento ou morte misteriosa de 10 cientistas norte-americanos especializados em tecnologia nuclear e foguetes. Os casos permanecem sem explicações claras e levantam questões sobre as circunstâncias envolvidas. O incidente gerou especulação sobre possíveis envolvimentos de agências governamentais ou potências rivais. Interesting Engineering">
+      <div class="article-meta">
+        <span class="article-time">03:56</span>
+        <span class="article-source">Interesting Engineering</span>
+      </div>
+      <div class="article-title">US’ 10 nuclear, rocket scientists died or disappeared in mysterious circumstances: Report</div>
+      <div class="article-summary">Um relatório documenta o desaparecimento ou morte misteriosa de 10 cientistas norte-americanos especializados em tecnologia nuclear e foguetes. Os casos permanecem sem explicações claras e levantam questões sobre as circunstâncias envolvidas. O incidente gerou especulação sobre possíveis envolvimentos de agências governamentais ou potências rivais.</div>
+      <a class="article-link" href="https://interestingengineering.com/culture/us-nuclear-rocket-scientists-died" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Chinese firm’s electric vehicle delivers 955 hp, 780-mile range with tri-motor design Uma empresa chinesa desenvolveu um veículo elétrico com três motores que entrega 955 cavalos de potência e alcance de 780 milhas (aproximadamente 1.255 km). O design tri-motor oferece performance elevada mantendo uma autonomia impressionante para veículos elétricos. Interesting Engineering">
+      <div class="article-meta">
+        <span class="article-time">01:37</span>
+        <span class="article-source">Interesting Engineering</span>
+      </div>
+      <div class="article-title">Chinese firm’s electric vehicle delivers 955 hp, 780-mile range with tri-motor design</div>
+      <div class="article-summary">Uma empresa chinesa desenvolveu um veículo elétrico com três motores que entrega 955 cavalos de potência e alcance de 780 milhas (aproximadamente 1.255 km). O design tri-motor oferece performance elevada mantendo uma autonomia impressionante para veículos elétricos.</div>
+      <a class="article-link" href="https://interestingengineering.com/transportation/chinese-firm-electric-wagon-955-hp" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="CNH provisória: o que é, quanto tempo vale e quais cuidados tomar? # CNH Provisória
+
+A CNH provisória é um documento temporário que permite ao condutor dirigir legalmente enquanto aguarda a emissão da CNH definitiva, tendo validade de 180 dias. É importante respeitar todas as regras de trânsito e as restrições específicas da CNH provisória, como não dirigir à noite em algumas situações, para evitar multas e problemas legais. Canaltech">
+      <div class="article-meta">
+        <span class="article-time">07:30</span>
+        <span class="article-source">Canaltech</span>
+      </div>
+      <div class="article-title">CNH provisória: o que é, quanto tempo vale e quais cuidados tomar?</div>
+      <div class="article-summary"># CNH Provisória
+
+A CNH provisória é um documento temporário que permite ao condutor dirigir legalmente enquanto aguarda a emissão da CNH definitiva, tendo validade de 180 dias. É importante respeitar todas as regras de trânsito e as restrições específicas da CNH provisória, como não dirigir à noite em algumas situações, para evitar multas e problemas legais.</div>
+      <a class="article-link" href="https://canaltech.com.br/carros/cnh-provisoria-o-que-e-quanto-tempo-vale-e-quais-cuidados-tomar/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+
+    <div class="article" data-searchable="Você pode estar vazando dados da sua empresa sem perceber # Resumo
+
+Muitos funcionários vazam dados empresariais inadvertidamente através de práticas inseguras, como compartilhar informações sensíveis em plataformas públicas, usar senhas fracas ou acessar sistemas em redes Wi-Fi desprotegidas. A falta de conscientização sobre segurança digital e a negligência com protocolos básicos de proteção de dados são as principais causas desses vazamentos involuntários. Empresas precisam investir em treinamento de segurança e estabelecer políticas mais rigorosas para evitar exposição de informações confidenciais. Canaltech">
+      <div class="article-meta">
+        <span class="article-time">06:00</span>
+        <span class="article-source">Canaltech</span>
+      </div>
+      <div class="article-title">Você pode estar vazando dados da sua empresa sem perceber</div>
+      <div class="article-summary"># Resumo
+
+Muitos funcionários vazam dados empresariais inadvertidamente através de práticas inseguras, como compartilhar informações sensíveis em plataformas públicas, usar senhas fracas ou acessar sistemas em redes Wi-Fi desprotegidas. A falta de conscientização sobre segurança digital e a negligência com protocolos básicos de proteção de dados são as principais causas desses vazamentos involuntários. Empresas precisam investir em treinamento de segurança e estabelecer políticas mais rigorosas para evitar exposição de informações confidenciais.</div>
+      <a class="article-link" href="https://canaltech.com.br/podcast/podcast-canaltech/voce-pode-estar-vazando-dados-da-sua-empresa-sem-perceber-6471/" target="_blank" rel="noopener">Ler matéria original →</a>
+    </div>
+  </div>
+</div>
+<div class="search-empty" id="searchEmpty">Nenhuma notícia encontrada</div>
+<div class="footer">Notícias &nbsp;·&nbsp; Professora Crypto</div>
+<div class="fab-group">
+  <button class="fab" onclick="window.scrollBy({top: window.innerHeight * 0.85, behavior:'smooth'})" title="↓">↓</button>
+</div>
+<script>
+  let currentTab = 'ia';
+  (function() {
+    function todayBRT() {
+      const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+      return d.getUTCFullYear() + '-' +
+        String(d.getUTCMonth() + 1).padStart(2,'0') + '-' +
+        String(d.getUTCDate()).padStart(2,'0');
+    }
+    const today = todayBRT();
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const current = parts[parts.length - 1] || '';
+    const btn = document.getElementById('btnHoje');
+    if (btn && current !== today) { btn.href = '/' + today + '/'; btn.style.display = 'inline-flex'; }
+  })();
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('panel-ia').classList.toggle('active', tab === 'ia');
+    document.getElementById('panel-tech').classList.toggle('active', tab === 'tech');
+    document.getElementById('tab-ia').className = 'tab-btn' + (tab === 'ia' ? ' active-ia' : '');
+    document.getElementById('tab-tech').className = 'tab-btn' + (tab === 'tech' ? ' active-tech' : '');
+    const input = document.getElementById('searchInput');
+    if (input.value) { input.value = ''; filterNews(''); }
+  }
+  function toggleSearch() {
+    const bar = document.getElementById('searchBar');
+    const open = bar.classList.toggle('open');
+    if (open) document.getElementById('searchInput').focus();
+    else { filterNews(''); document.getElementById('searchInput').value = ''; }
+  }
+  function filterNews(q) {
+    const term = q.toLowerCase().trim();
+    const panel = document.getElementById('panel-' + currentTab);
+    const items = panel.querySelectorAll('.article');
+    let any = false;
+    items.forEach(item => {
+      const match = !term || (item.dataset.searchable || '').toLowerCase().includes(term);
+      item.classList.toggle('hidden', !match);
+      if (match) any = true;
+    });
+    document.getElementById('searchEmpty').style.display = (term && !any) ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>
